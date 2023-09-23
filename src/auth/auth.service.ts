@@ -1,26 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { AdminService } from 'src/admin.service';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  private readonly logger = new Logger(AuthService.name);
+  constructor(private readonly admin: AdminService) {}
+  async login({ token, expiresIn }: { token?: string; expiresIn?: number }) {
+    try {
+      await this.admin.auth.verifyIdToken(String(token), true);
+      return await this.admin.auth.createSessionCookie(String(token), { expiresIn });
+    } catch (err: any) {
+      this.logger.error(err);
+      throw new UnauthorizedException(err);
+    }
   }
 }

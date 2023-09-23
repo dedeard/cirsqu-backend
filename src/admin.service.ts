@@ -1,19 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { auth as authentication, firestore, initializeApp } from 'firebase-admin';
-import { App, AppOptions, cert, getApps } from 'firebase-admin/app';
+import * as admin from 'firebase-admin';
+import { App, cert, getApps } from 'firebase-admin/app';
 
 @Injectable()
 export class AdminService {
-  protected readonly app: App;
-  protected readonly auth: authentication.Auth;
-  protected readonly db: firestore.Firestore;
+  readonly app: App;
+  readonly auth: admin.auth.Auth;
+  readonly db: admin.firestore.Firestore;
 
   constructor(private readonly config: ConfigService) {
-    const appConfig = this.getConfig();
-    this.app = this.initAdminApp(appConfig);
-    this.auth = authentication();
-    this.db = firestore();
+    this.app = this.initAdminApp();
+    this.auth = admin.auth();
+    this.db = admin.firestore();
   }
 
   getConfig() {
@@ -26,10 +25,10 @@ export class AdminService {
     };
   }
 
-  initAdminApp(config: AppOptions) {
+  initAdminApp() {
     const apps = getApps();
     if (apps.length <= 0) {
-      return initializeApp(config);
+      return admin.initializeApp(this.getConfig());
     }
     return apps[0];
   }
