@@ -14,7 +14,7 @@ export class AuthController {
   async login(@Res({ passthrough: true }) res: Response, @Body('token') token?: string) {
     const sessionAge = Number(this.config.get<string>('SESSION_COOKIE_AGE', '5'));
     const secure = this.config.get<string>('SESSION_COOKIE_SECURE') === 'true';
-    const expiresIn = 60 * 60 * 24 * sessionAge * 1000;
+    const expiresIn = 60 * 60 * 24 * sessionAge;
     const session = await this.authService.login({ token, expiresIn });
 
     res.cookie('session', session, {

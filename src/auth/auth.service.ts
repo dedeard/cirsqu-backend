@@ -8,7 +8,7 @@ export class AuthService {
   async login({ token, expiresIn }: { token?: string; expiresIn?: number }) {
     try {
       await this.admin.auth.verifyIdToken(String(token), true);
-      return await this.admin.auth.createSessionCookie(String(token), { expiresIn });
+      return await this.admin.auth.createSessionCookie(String(token), { expiresIn: expiresIn * 1000 });
     } catch (err: any) {
       this.logger.error(err);
       throw new UnauthorizedException(err);
