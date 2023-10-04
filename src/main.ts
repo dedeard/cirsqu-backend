@@ -3,6 +3,7 @@ import { UnprocessableEntityException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { ValidationError } from 'class-validator';
+import cookieParser from 'cookie-parser';
 
 // Create custom exception factory for validation pipe
 function exceptionFactory(errors: ValidationError[]) {
@@ -23,15 +24,12 @@ async function bootstrap() {
   app.enableCors({
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Cookie'],
-    origin(origin, cb) {
-      if (allowedOrigins.includes(origin)) {
-        cb(null, origin);
-      } else {
-        cb(new Error('Not allowed by CORS'));
-      }
-    },
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: allowedOrigins,
   });
+
+  // Enable cookie parsing
+  app.use(cookieParser());
 
   // Use global pipes for validation with custom exception factory.
   app.useGlobalPipes(
