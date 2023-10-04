@@ -6,7 +6,7 @@ import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
 import { StorageService } from '../firebase-admin/storage.service';
-import urlToBuffer from 'src/utils/url-to-buffer';
+import urlToBuffer from '../utils/url-to-buffer';
 
 export interface IProfile {
   name: string;
