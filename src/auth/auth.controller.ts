@@ -21,6 +21,7 @@ export class AuthController {
       maxAge: expiresIn,
       domain: this.config.get('SESSION_COOKIE_DOMAIN'),
       httpOnly: secure,
+      secure,
       sameSite: secure ? 'none' : 'lax',
     });
 

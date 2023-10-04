@@ -24,9 +24,9 @@ async function bootstrap() {
     credentials: true,
     origin(origin, cb) {
       if (allowedOrigins.includes(origin)) {
-        cb(null, true);
+        cb(null, origin);
       } else {
-        cb(null, false);
+        cb(new Error('Not allowed by CORS'));
       }
     },
   });
