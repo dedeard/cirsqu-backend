@@ -15,13 +15,14 @@ function initAdminApp(config: ConfigService) {
 
   admin.initializeApp({
     credential: admin.credential.cert(credentials),
+    storageBucket: config.getOrThrow<string>('FBA_STORAGE_BUCKET'),
   });
 }
 
 // Create custom exception factory for validation pipe
 function exceptionFactory(errors: ValidationError[]) {
-  const errorMessages = errors.reduce((acc, error) => ({ ...acc, [error.property]: Object.values(error.constraints)[0] }), {});
-  return new UnprocessableEntityException({ errors: errorMessages });
+  const firstError = errors[0];
+  return new UnprocessableEntityException(Object.values(firstError.constraints)[0]);
 }
 
 async function bootstrap() {
@@ -34,13 +35,13 @@ async function bootstrap() {
   initAdminApp(config);
 
   // Get allowed origins for CORS configuration
-  const allowedOrigins = config.get<string>('CORS_ORIGINS', '*').split(',');
+  const allowedOrigins = config.getOrThrow<string>('CORS_ORIGINS').split(',');
 
   // Enable CORS with dynamic origin based on the request's origin header.
   app.enableCors({
     credentials: true,
     origin(origin, cb) {
-      if (allowedOrigins.includes(origin) || allowedOrigins[0] === '*') {
+      if (allowedOrigins.includes(origin)) {
         cb(null, true);
       } else {
         cb(null, false);
