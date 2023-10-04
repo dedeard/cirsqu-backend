@@ -1,7 +1,7 @@
 import { Bucket } from '@google-cloud/storage';
 import { Injectable } from '@nestjs/common';
+import { fromBuffer as fileTypeFromBuffer } from 'file-type';
 import { AdminService } from './admin.service';
-
 @Injectable()
 export class StorageService {
   constructor(private readonly admin: AdminService) {}
@@ -11,7 +11,6 @@ export class StorageService {
   }
 
   async save(name: string, buffer: Buffer) {
-    const { fileTypeFromBuffer } = await import('file-type');
     const type = await fileTypeFromBuffer(buffer);
     await this.bucket.file(name).save(buffer, {
       metadata: { contentType: type.mime },

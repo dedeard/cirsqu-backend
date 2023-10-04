@@ -18,7 +18,7 @@ export class ProfilesController {
   }
 
   @Put()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('avatar'))
   update(
     @Req() { user }: { user: UserRecord },
     @UploadedFile(new ValidateImagePipe({ required: false })) file,

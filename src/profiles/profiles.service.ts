@@ -46,7 +46,7 @@ export class ProfilesService {
     return null;
   }
 
-  async create(user: UserRecord, data: CreateProfileDto): Promise<void> {
+  async create(user: UserRecord, data: CreateProfileDto) {
     const usernameExists = await this.usernameExists(data.username);
     if (usernameExists) {
       throw new BadRequestException('Username already exists.');
@@ -61,26 +61,30 @@ export class ProfilesService {
     if (user.photoURL) avatar = await this.generateAvatar(user.photoURL);
 
     await this.collection.doc(user.uid).set({ ...data, avatar });
+
+    return this.findOne(user.uid);
   }
 
-  async update(user: UserRecord, data: UpdateProfileDto, buffer?: Buffer): Promise<void> {
+  async update(user: UserRecord, data: UpdateProfileDto, buffer?: Buffer) {
     const usernameExists = await this.usernameExists(data.username, user.uid);
     if (usernameExists) {
       throw new BadRequestException('Username already exists.');
     }
 
-    const profileNotFound = !(await this.findOne(user.uid));
-    if (profileNotFound) {
+    const profile = await this.findOne(user.uid);
+    if (!profile) {
       throw new BadRequestException('User profile not found.');
     }
 
-    let avatar: string | undefined = undefined;
-    if (buffer) avatar = await this.generateAvatar(buffer);
+    const dataToUpdata: IProfile = { ...data };
+    if (buffer) dataToUpdata.avatar = await this.generateAvatar(buffer, profile.avatar);
 
-    await this.collection.doc(user.uid).update({ ...data, avatar });
+    await this.collection.doc(user.uid).update({ ...dataToUpdata });
+
+    return this.findOne(user.uid);
   }
 
-  async generateAvatar(bufferOrUrl: Buffer | string) {
+  async generateAvatar(bufferOrUrl: Buffer | string, old?: string) {
     let buffer: Buffer;
 
     if (typeof bufferOrUrl === 'string') {
@@ -92,6 +96,10 @@ export class ProfilesService {
     const name = 'avatar/' + uuid() + '.jpg';
     const buff = await sharp(buffer).resize(200, 200, { fit: 'cover' }).toFormat('jpeg').toBuffer();
     await this.storage.save(name, buff);
+    if (old) {
+      await this.storage.removeIfExists(old);
+    }
+
     return name;
   }
 }
