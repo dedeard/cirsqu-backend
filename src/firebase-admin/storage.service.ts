@@ -1,9 +1,14 @@
+import { Bucket } from '@google-cloud/storage';
 import { Injectable } from '@nestjs/common';
-import admin from 'firebase-admin';
+import { AdminService } from './admin.service';
 
 @Injectable()
 export class StorageService {
-  private readonly bucket = admin.storage().bucket();
+  constructor(private readonly admin: AdminService) {}
+
+  get bucket() {
+    return this.admin.storage.bucket() as unknown as Bucket;
+  }
 
   async save(name: string, buffer: Buffer) {
     const { fileTypeFromBuffer } = await import('file-type');

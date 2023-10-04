@@ -1,16 +1,27 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import admin from 'firebase-admin';
-import { IProfile } from '../types';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
+import sharp from 'sharp';
+import { v4 as uuid } from 'uuid';
+import { StorageService } from '../firebase-admin/storage.service';
+import urlToBuffer from 'src/utils/url-to-buffer';
+
+export interface IProfile {
+  name: string;
+  username: string;
+  avatar?: string | null;
+  bio?: string | null;
+  website?: string | null;
+}
 
 @Injectable()
 export class ProfilesService {
   private readonly db = admin.firestore();
   private collection: FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData>;
 
-  constructor() {
+  constructor(private readonly storage: StorageService) {
     this.collection = this.db.collection('profiles');
   }
 
@@ -46,10 +57,13 @@ export class ProfilesService {
       throw new BadRequestException('Profile already created.');
     }
 
-    await this.collection.doc(user.uid).set(data);
+    let avatar: string | undefined = undefined;
+    if (user.photoURL) avatar = await this.generateAvatar(user.photoURL);
+
+    await this.collection.doc(user.uid).set({ ...data, avatar });
   }
 
-  async update(user: UserRecord, data: UpdateProfileDto): Promise<void> {
+  async update(user: UserRecord, data: UpdateProfileDto, buffer?: Buffer): Promise<void> {
     const usernameExists = await this.usernameExists(data.username, user.uid);
     if (usernameExists) {
       throw new BadRequestException('Username already exists.');
@@ -60,6 +74,24 @@ export class ProfilesService {
       throw new BadRequestException('User profile not found.');
     }
 
-    await this.collection.doc(user.uid).update({ ...data });
+    let avatar: string | undefined = undefined;
+    if (buffer) avatar = await this.generateAvatar(buffer);
+
+    await this.collection.doc(user.uid).update({ ...data, avatar });
+  }
+
+  async generateAvatar(bufferOrUrl: Buffer | string) {
+    let buffer: Buffer;
+
+    if (typeof bufferOrUrl === 'string') {
+      buffer = await urlToBuffer(new URL(bufferOrUrl));
+    } else {
+      buffer = bufferOrUrl;
+    }
+
+    const name = 'avatar/' + uuid() + '.jpg';
+    const buff = await sharp(buffer).resize(200, 200, { fit: 'cover' }).toFormat('jpeg').toBuffer();
+    await this.storage.save(name, buff);
+    return name;
   }
 }
