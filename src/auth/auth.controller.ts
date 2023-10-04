@@ -25,6 +25,6 @@ export class AuthController {
       sameSite: secure ? 'none' : 'lax',
     });
 
-    return res.status(200).json({ OK: true });
+    res.status(200).json({ OK: true });
   }
 }
