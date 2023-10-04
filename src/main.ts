@@ -23,8 +23,6 @@ async function bootstrap() {
   // Enable CORS with dynamic origin based on the request's origin header.
   app.enableCors({
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: ['Content-Type', 'Authorization'],
     origin(origin, cb) {
       if (allowedOrigins.includes(origin)) {
         cb(null, true);
