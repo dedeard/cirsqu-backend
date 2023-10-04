@@ -25,7 +25,13 @@ async function bootstrap() {
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: ['Content-Type', 'Authorization'],
-    origin: allowedOrigins,
+    origin(origin, cb) {
+      if (allowedOrigins.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(null, false);
+      }
+    },
   });
 
   // Enable cookie parsing
