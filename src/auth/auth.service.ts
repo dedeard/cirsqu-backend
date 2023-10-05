@@ -1,5 +1,5 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { AdminService } from '../firebase-admin/admin.service';
+import { AdminService } from '../common/services/admin.service';
 
 @Injectable()
 export class AuthService {

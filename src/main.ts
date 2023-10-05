@@ -40,6 +40,7 @@ async function bootstrap() {
     new ValidationPipe({
       stopAtFirstError: true,
       whitelist: true,
+      transform: true,
       exceptionFactory,
     }),
   );

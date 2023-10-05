@@ -5,8 +5,8 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
-import { StorageService } from '../firebase-admin/storage.service';
-import urlToBuffer from '../utils/url-to-buffer';
+import { StorageService } from '../common/services/storage.service';
+import urlToBuffer from '../common/utils/url-to-buffer';
 
 export interface IProfile {
   name: string;

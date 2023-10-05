@@ -1,5 +1,5 @@
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
-import { fromBuffer as fileTypeFromBuffer } from 'file-type';
+import { fromBuffer } from 'file-type';
 
 type Options = {
   required: boolean;
@@ -26,7 +26,7 @@ export class ValidateImagePipe implements PipeTransform {
       throw new BadRequestException('No file submitted');
     }
     if (value) {
-      const { mime } = await fileTypeFromBuffer(value.buffer);
+      const { mime } = await fromBuffer(value.buffer);
 
       if (!this.options.allowedMimes.includes(mime)) {
         throw new BadRequestException('Invalid file type');

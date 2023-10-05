@@ -5,7 +5,7 @@ import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ValidateImagePipe } from '../pipes/validate-image.pipe';
+import { ValidateImagePipe } from '../common/pipes/validate-image.pipe';
 
 @UseGuards(AuthGuard('cookie-or-bearer'))
 @Controller('profiles')

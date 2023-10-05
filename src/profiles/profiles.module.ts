@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { ProfilesController } from './profiles.controller';
-import { FirebaseAdminModule } from '../firebase-admin/firebase-admin.module';
+import { CommonModule } from '../common/common.module';
 
 @Module({
-  imports: [FirebaseAdminModule],
+  imports: [CommonModule],
   controllers: [ProfilesController],
   providers: [ProfilesService],
   exports: [ProfilesService],

@@ -2,7 +2,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
 import { Request } from 'express';
-import { AdminService } from '../firebase-admin/admin.service';
+import { AdminService } from '../common/services/admin.service';
 
 @Injectable()
 export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-or-bearer') {

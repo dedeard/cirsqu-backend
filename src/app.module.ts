@@ -5,10 +5,10 @@ import { AuthModule } from './auth/auth.module';
 import { CookieOrBearerStrategy } from './auth/cookie-or-bearer.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { ProfilesModule } from './profiles/profiles.module';
-import { FirebaseAdminModule } from './firebase-admin/firebase-admin.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
-  imports: [PassportModule, ConfigModule.forRoot({ isGlobal: true }), FirebaseAdminModule, AuthModule, ProfilesModule],
+  imports: [PassportModule, ConfigModule.forRoot({ isGlobal: true }), CommonModule, AuthModule, ProfilesModule],
   providers: [CookieOrBearerStrategy, AppService],
 })
 export class AppModule {}
