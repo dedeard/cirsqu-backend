@@ -1,5 +1,5 @@
 import { AuthGuard } from '@nestjs/passport';
-import { Controller, Post, Put, Req, Body, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Put, Req, Body, UseGuards, UseInterceptors, UploadedFile, Get } from '@nestjs/common';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -11,6 +11,11 @@ import { ValidateImagePipe } from '../common/pipes/validate-image.pipe';
 @Controller('profiles')
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
+
+  @Get()
+  findOne(@Req() { user }: { user: UserRecord }) {
+    return this.profilesService.findOne(user.uid);
+  }
 
   @Post()
   create(@Req() { user }: { user: UserRecord }, @Body() createProfileDto: CreateProfileDto) {

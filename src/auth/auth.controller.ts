@@ -1,4 +1,4 @@
-import { Controller, Res, Post, Body, Get, UseGuards, HttpStatus } from '@nestjs/common';
+import { Controller, Res, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
@@ -27,13 +27,19 @@ export class AuthController {
       sameSite: secure ? 'none' : 'lax',
     });
 
-    res.sendStatus(HttpStatus.NO_CONTENT);
+    return { OK: true };
   }
 
   @UseGuards(AuthGuard('cookie-or-bearer'))
   @Get('custom-token')
-  async generateCustomToken(@Res() res: Response & { user: UserRecord }) {
-    const token = await this.authService.generateCustomToken(res.user);
-    res.status(HttpStatus.OK).json({ token });
+  async generateCustomToken(@Req() { user }: { user: UserRecord }) {
+    const token = await this.authService.generateCustomToken(user);
+    return { token };
+  }
+
+  @UseGuards(AuthGuard('cookie-or-bearer'))
+  @Get('user-data')
+  async getUserData(@Req() { user }: { user: UserRecord }) {
+    return user.toJSON();
   }
 }
