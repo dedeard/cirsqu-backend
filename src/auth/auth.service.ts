@@ -1,5 +1,6 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { AdminService } from '../common/services/admin.service';
+import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +14,15 @@ export class AuthService {
     } catch (err: any) {
       this.logger.error(err);
       throw new UnauthorizedException(err);
+    }
+  }
+
+  async generateCustomToken(user: UserRecord) {
+    try {
+      return await this.admin.auth.createCustomToken(user.uid);
+    } catch (err: any) {
+      this.logger.error(err);
+      throw new InternalServerErrorException('Failed to generate custom token.');
     }
   }
 }

@@ -1,9 +1,11 @@
-import { Controller, Res, Post, Body } from '@nestjs/common';
+import { Controller, Res, Post, Body, Get, UseGuards, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
+import { AuthGuard } from '@nestjs/passport';
+import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 
-@Controller()
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -11,7 +13,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  async login(@Res({ passthrough: true }) res: Response, @Body('token') token?: string) {
+  async login(@Res() res: Response, @Body('token') token?: string) {
     const sessionAge = Number(this.config.get<string>('SESSION_COOKIE_AGE', '5'));
     const secure = this.config.get<string>('SESSION_COOKIE_SECURE') === 'true';
     const expiresIn = 60 * 60 * 24 * sessionAge;
@@ -25,6 +27,13 @@ export class AuthController {
       sameSite: secure ? 'none' : 'lax',
     });
 
-    res.status(200).json({ OK: true });
+    res.sendStatus(HttpStatus.NO_CONTENT);
+  }
+
+  @UseGuards(AuthGuard('cookie-or-bearer'))
+  @Get('custom-token')
+  async generateCustomToken(@Res() res: Response & { user: UserRecord }) {
+    const token = await this.authService.generateCustomToken(res.user);
+    res.status(HttpStatus.OK).json({ token });
   }
 }
