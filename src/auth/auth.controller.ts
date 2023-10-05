@@ -27,7 +27,7 @@ export class AuthController {
       sameSite: secure ? 'none' : 'lax',
     });
 
-    return { OK: true };
+    res.end();
   }
 
   @UseGuards(AuthGuard('cookie-or-bearer'))
