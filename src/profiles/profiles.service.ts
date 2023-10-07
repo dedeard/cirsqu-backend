@@ -11,6 +11,7 @@ import urlToBuffer from '../common/utils/url-to-buffer';
 export interface IProfile {
   name: string;
   username: string;
+  createdAt: string;
   avatar?: string | null;
   bio?: string | null;
   website?: string | null;
@@ -60,7 +61,7 @@ export class ProfilesService {
     let avatar: string | undefined = undefined;
     if (user.photoURL) avatar = await this.generateAvatar(user.photoURL);
 
-    await this.collection.doc(user.uid).set({ ...data, avatar });
+    await this.collection.doc(user.uid).set({ ...data, avatar, createdAt: admin.firestore.FieldValue.serverTimestamp() });
 
     return this.findOne(user.uid);
   }
@@ -76,7 +77,7 @@ export class ProfilesService {
       throw new BadRequestException('User profile not found.');
     }
 
-    const dataToUpdata: IProfile = { ...data };
+    const dataToUpdata: UpdateProfileDto & { avatar?: string } = { ...data };
     if (buffer) dataToUpdata.avatar = await this.generateAvatar(buffer, profile.avatar);
 
     await this.collection.doc(user.uid).update({ ...dataToUpdata });
