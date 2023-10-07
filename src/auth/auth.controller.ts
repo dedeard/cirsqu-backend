@@ -20,7 +20,7 @@ export class AuthController {
     const session = await this.authService.login({ token, expiresIn });
 
     res.cookie('session', session, {
-      maxAge: expiresIn,
+      maxAge: expiresIn * 1000,
       domain: this.config.get('SESSION_COOKIE_DOMAIN'),
       httpOnly: secure,
       secure,
