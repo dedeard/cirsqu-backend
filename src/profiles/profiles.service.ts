@@ -7,11 +7,13 @@ import sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
 import { StorageService } from '../common/services/storage.service';
 import urlToBuffer from '../common/utils/url-to-buffer';
+import { StripeService } from '../common/services/stripe.service';
 
 export interface IProfile {
   name: string;
   username: string;
   createdAt: string;
+  stripeCustomerId: string;
   avatar?: string | null;
   bio?: string | null;
   website?: string | null;
@@ -20,9 +22,13 @@ export interface IProfile {
 @Injectable()
 export class ProfilesService {
   private readonly db = admin.firestore();
-  private collection: FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData>;
+  private readonly serverTimestamp = admin.firestore.FieldValue.serverTimestamp;
+  private readonly collection: FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData>;
 
-  constructor(private readonly storage: StorageService) {
+  constructor(
+    private readonly storage: StorageService,
+    private readonly stripe: StripeService,
+  ) {
     this.collection = this.db.collection('profiles');
   }
 
@@ -61,7 +67,12 @@ export class ProfilesService {
     let avatar: string | undefined = undefined;
     if (user.photoURL) avatar = await this.generateAvatar(user.photoURL);
 
-    await this.collection.doc(user.uid).set({ ...data, avatar, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+    const customer = await this.stripe.customers.create({
+      name: data.name,
+      email: user.email,
+      metadata: { userId: user.uid, username: data.username },
+    });
+    await this.collection.doc(user.uid).set({ ...data, avatar, stripeCustomerId: customer.id, createdAt: this.serverTimestamp() });
 
     return this.findOne(user.uid);
   }
@@ -80,7 +91,15 @@ export class ProfilesService {
     const dataToUpdata: UpdateProfileDto & { avatar?: string } = { ...data };
     if (buffer) dataToUpdata.avatar = await this.generateAvatar(buffer, profile.avatar);
 
-    await this.collection.doc(user.uid).update({ ...dataToUpdata });
+    await this.db.runTransaction(async (t) => {
+      t.update(this.collection.doc(user.uid), { ...dataToUpdata });
+      if (profile.username !== dataToUpdata.username || profile.name !== dataToUpdata.name) {
+        await this.stripe.customers.update(profile.stripeCustomerId, {
+          name: dataToUpdata.name,
+          metadata: { username: dataToUpdata.username },
+        });
+      }
+    });
 
     return this.findOne(user.uid);
   }
