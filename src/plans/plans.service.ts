@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { StripeService } from '../common/services/stripe.service';
-import formatAmount from 'src/common/utils/format-amount';
+import formatAmount from '../common/utils/format-amount';
 import { ConfigService } from '@nestjs/config';
-import PLAN_DETAILS from 'src/common/constants/plan-details';
+import PLAN_DETAILS from '../common/constants/plan-details';
 import Stripe from 'stripe';
 
 export interface IPlan {
