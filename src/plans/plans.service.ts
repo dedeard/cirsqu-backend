@@ -3,6 +3,7 @@ import { StripeService } from '../common/services/stripe.service';
 import formatAmount from 'src/common/utils/format-amount';
 import { ConfigService } from '@nestjs/config';
 import PLAN_DETAILS from 'src/common/constants/plan-details';
+import Stripe from 'stripe';
 
 export interface IPlan {
   id: string;
@@ -32,29 +33,34 @@ export class PlansService {
     this.productId = config.getOrThrow('STRIPE_PRODUCT_ID');
   }
 
+  static transform(price: Stripe.Price): IPlan {
+    return {
+      id: price.id,
+      slug: price.lookup_key || price.id,
+      currency: price.currency,
+      livemode: price.livemode,
+      nickname: price.nickname,
+      recurring: price.recurring
+        ? {
+            interval: price.recurring.interval,
+            interval_count: price.recurring.interval_count,
+          }
+        : null,
+      amount: {
+        formatted: formatAmount(price.unit_amount, price.currency),
+        decimal: (price.unit_amount / 100).toFixed(2),
+      },
+      ...PLAN_DETAILS[price.lookup_key],
+    };
+  }
+
   async findAll() {
     const { data } = await this.stripe.prices.list({ product: this.productId, active: true });
-    return data
-      .sort((a, b) => a.unit_amount - b.unit_amount)
-      .map((plan): IPlan => {
-        return {
-          id: plan.id,
-          slug: plan.lookup_key || plan.id,
-          currency: plan.currency,
-          livemode: plan.livemode,
-          nickname: plan.nickname,
-          recurring: plan.recurring
-            ? {
-                interval: plan.recurring.interval,
-                interval_count: plan.recurring.interval_count,
-              }
-            : null,
-          amount: {
-            formatted: formatAmount(plan.unit_amount, plan.currency),
-            decimal: (plan.unit_amount / 100).toFixed(2),
-          },
-          ...PLAN_DETAILS[plan.lookup_key],
-        };
-      });
+    return data.sort((a, b) => a.unit_amount - b.unit_amount).map(PlansService.transform);
+  }
+
+  async findOneBySlug(slug: string) {
+    const { data } = await this.stripe.prices.list({ product: this.productId, active: true, lookup_keys: [slug] });
+    return data.map(PlansService.transform)[0];
   }
 }
