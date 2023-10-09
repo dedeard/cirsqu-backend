@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
 import { Request } from 'express';
 import { AdminService } from '../common/services/admin.service';
-import { ProfilesService } from 'src/profiles/profiles.service';
+import { ProfilesService } from '../profiles/profiles.service';
 
 @Injectable()
 export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-or-bearer') {
