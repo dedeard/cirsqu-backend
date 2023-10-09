@@ -6,7 +6,6 @@ import Stripe from 'stripe';
 export class StripeService {
   readonly customers: Stripe.CustomersResource;
   readonly products: Stripe.ProductsResource;
-  readonly plans: Stripe.PlansResource;
   readonly prices: Stripe.PricesResource;
   readonly paymentIntents: Stripe.PaymentIntentsResource;
   readonly subscriptions: Stripe.SubscriptionsResource;
@@ -16,7 +15,6 @@ export class StripeService {
     const stripe = new Stripe(config.getOrThrow('STRIPE_SECRET_KEY'), { apiVersion: '2023-08-16' });
     this.customers = stripe.customers;
     this.products = stripe.products;
-    this.plans = stripe.plans;
     this.prices = stripe.prices;
     this.paymentIntents = stripe.paymentIntents;
     this.subscriptions = stripe.subscriptions;
