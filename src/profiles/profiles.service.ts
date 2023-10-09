@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import admin from 'firebase-admin';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -8,16 +8,6 @@ import { v4 as uuid } from 'uuid';
 import { StorageService } from '../common/services/storage.service';
 import urlToBuffer from '../common/utils/url-to-buffer';
 import { StripeService } from '../common/services/stripe.service';
-
-export interface IProfile {
-  name: string;
-  username: string;
-  createdAt: string;
-  stripeCustomerId: string;
-  avatar?: string | null;
-  bio?: string | null;
-  website?: string | null;
-}
 
 @Injectable()
 export class ProfilesService {
@@ -45,7 +35,15 @@ export class ProfilesService {
     return false;
   }
 
-  async findOne(uid: string): Promise<IProfile | null> {
+  async findOrFail(uid: string): Promise<IProfile | null> {
+    const profile = await this.find(uid);
+    if (!profile) {
+      throw new NotFoundException('Profile not found.');
+    }
+    return profile;
+  }
+
+  async find(uid: string): Promise<IProfile | null> {
     const doc = await this.collection.doc(uid).get();
     if (doc.exists) {
       return doc.data() as IProfile;
@@ -59,7 +57,7 @@ export class ProfilesService {
       throw new BadRequestException('Username already exists.');
     }
 
-    const profileExists = await this.findOne(user.uid);
+    const profileExists = await this.find(user.uid);
     if (profileExists) {
       throw new BadRequestException('Profile already created.');
     }
@@ -74,25 +72,21 @@ export class ProfilesService {
     });
     await this.collection.doc(user.uid).set({ ...data, avatar, stripeCustomerId: customer.id, createdAt: this.serverTimestamp() });
 
-    return this.findOne(user.uid);
+    return this.find(user.uid);
   }
 
-  async update(user: UserRecord, data: UpdateProfileDto, buffer?: Buffer) {
-    const usernameExists = await this.usernameExists(data.username, user.uid);
+  async update(uid: string, data: UpdateProfileDto, buffer?: Buffer) {
+    const usernameExists = await this.usernameExists(data.username, uid);
     if (usernameExists) {
       throw new BadRequestException('Username already exists.');
     }
 
-    const profile = await this.findOne(user.uid);
-    if (!profile) {
-      throw new BadRequestException('User profile not found.');
-    }
-
+    const profile = await this.findOrFail(uid);
     const dataToUpdata: UpdateProfileDto & { avatar?: string } = { ...data };
     if (buffer) dataToUpdata.avatar = await this.generateAvatar(buffer, profile.avatar);
 
     await this.db.runTransaction(async (t) => {
-      t.update(this.collection.doc(user.uid), { ...dataToUpdata });
+      t.update(this.collection.doc(uid), { ...dataToUpdata });
       if (profile.username !== dataToUpdata.username || profile.name !== dataToUpdata.name) {
         await this.stripe.customers.update(profile.stripeCustomerId, {
           name: dataToUpdata.name,
@@ -101,7 +95,7 @@ export class ProfilesService {
       }
     });
 
-    return this.findOne(user.uid);
+    return this.findOrFail(uid);
   }
 
   async generateAvatar(bufferOrUrl: Buffer | string, old?: string) {
