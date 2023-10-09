@@ -3,33 +3,29 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
 import { Request } from 'express';
 import { AdminService } from '../common/services/admin.service';
-import { ProfilesService } from '../profiles/profiles.service';
+import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 
 @Injectable()
 export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-or-bearer') {
   private readonly logger = new Logger(CookieOrBearerStrategy.name);
-  constructor(
-    private readonly admin: AdminService,
-    private readonly profilesService: ProfilesService,
-  ) {
+  constructor(private readonly admin: AdminService) {
     super();
   }
-  async verifySessionCookie(session?: string | null): Promise<IUser> {
+
+  async verifySessionCookie(session?: string | null): Promise<UserRecord> {
     if (!session) {
       throw new UnauthorizedException();
     }
     try {
       const decoded = await this.admin.auth.verifySessionCookie(session, true);
-      const user = (await this.admin.auth.getUser(decoded.uid)) as IUser;
-      user.profile = await this.profilesService.find(decoded.uid);
-      return user;
+      return await this.admin.auth.getUser(decoded.uid);
     } catch (err: any) {
       this.logger.error(err);
       throw new UnauthorizedException(err);
     }
   }
 
-  async validate(req: Request) {
+  validate(req: Request) {
     let token: string = req.cookies?.['session'];
 
     if (!token) {
@@ -39,6 +35,6 @@ export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-o
       }
     }
 
-    return await this.verifySessionCookie(token);
+    return this.verifySessionCookie(token);
   }
 }

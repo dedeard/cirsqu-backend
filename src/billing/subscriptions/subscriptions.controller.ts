@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthProfileGuard } from '../../auth/guards/auth-profile.guard';
 
-@UseGuards(AuthGuard('cookie-or-bearer'))
+@UseGuards(AuthProfileGuard)
 @Controller('subscriptions')
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}

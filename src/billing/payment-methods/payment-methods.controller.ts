@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { PaymentMethodsService } from './payment-methods.service';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthProfileGuard } from '../../auth/guards/auth-profile.guard';
 
-@UseGuards(AuthGuard('cookie-or-bearer'))
+@UseGuards(AuthProfileGuard)
 @Controller('payment-methods')
 export class PaymentMethodsController {
   constructor(private readonly paymentMethodsService: PaymentMethodsService) {}

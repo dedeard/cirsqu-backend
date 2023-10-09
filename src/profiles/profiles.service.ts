@@ -75,27 +75,26 @@ export class ProfilesService {
     return this.find(user.uid);
   }
 
-  async update(uid: string, data: UpdateProfileDto, buffer?: Buffer) {
-    const usernameExists = await this.usernameExists(data.username, uid);
+  async update(user: IUser, data: UpdateProfileDto, buffer?: Buffer) {
+    const usernameExists = await this.usernameExists(data.username, user.uid);
     if (usernameExists) {
       throw new BadRequestException('Username already exists.');
     }
 
-    const profile = await this.findOrFail(uid);
     const dataToUpdata: UpdateProfileDto & { avatar?: string } = { ...data };
-    if (buffer) dataToUpdata.avatar = await this.generateAvatar(buffer, profile.avatar);
+    if (buffer) dataToUpdata.avatar = await this.generateAvatar(buffer, user.profile.avatar);
 
     await this.db.runTransaction(async (t) => {
-      t.update(this.collection.doc(uid), { ...dataToUpdata });
-      if (profile.username !== dataToUpdata.username || profile.name !== dataToUpdata.name) {
-        await this.stripe.customers.update(profile.stripeCustomerId, {
+      t.update(this.collection.doc(user.uid), { ...dataToUpdata });
+      if (user.profile.username !== dataToUpdata.username || user.profile.name !== dataToUpdata.name) {
+        await this.stripe.customers.update(user.profile.stripeCustomerId, {
           name: dataToUpdata.name,
           metadata: { username: dataToUpdata.username },
         });
       }
     });
 
-    return this.findOrFail(uid);
+    return this.findOrFail(user.uid);
   }
 
   async generateAvatar(bufferOrUrl: Buffer | string, old?: string) {
