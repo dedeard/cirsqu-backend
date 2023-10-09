@@ -3,20 +3,26 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
 import { Request } from 'express';
 import { AdminService } from '../common/services/admin.service';
+import { ProfilesService } from 'src/profiles/profiles.service';
 
 @Injectable()
 export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-or-bearer') {
   private readonly logger = new Logger(CookieOrBearerStrategy.name);
-  constructor(private readonly admin: AdminService) {
+  constructor(
+    private readonly admin: AdminService,
+    private readonly profilesService: ProfilesService,
+  ) {
     super();
   }
-  async verifySessionCookie(session?: string | null) {
+  async verifySessionCookie(session?: string | null): Promise<IUser> {
     if (!session) {
       throw new UnauthorizedException();
     }
     try {
       const decoded = await this.admin.auth.verifySessionCookie(session, true);
-      return await this.admin.auth.getUser(decoded.uid);
+      const user = (await this.admin.auth.getUser(decoded.uid)) as IUser;
+      user.profile = await this.profilesService.find(decoded.uid);
+      return user;
     } catch (err: any) {
       this.logger.error(err);
       throw new UnauthorizedException(err);
