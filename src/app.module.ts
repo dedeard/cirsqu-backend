@@ -7,10 +7,18 @@ import { PassportModule } from '@nestjs/passport';
 import { ProfilesModule } from './profiles/profiles.module';
 import { CommonModule } from './common/common.module';
 import { BillingModule } from './billing/billing.module';
-import { PlansModule } from './plans/plans.module';
+import { ProductsModule } from './products/products.module';
 
 @Module({
-  imports: [PassportModule, ConfigModule.forRoot({ isGlobal: true }), CommonModule, AuthModule, ProfilesModule, BillingModule, PlansModule],
+  imports: [
+    PassportModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    CommonModule,
+    AuthModule,
+    ProfilesModule,
+    BillingModule,
+    ProductsModule,
+  ],
   providers: [CookieOrBearerStrategy, AppService],
 })
 export class AppModule {}
