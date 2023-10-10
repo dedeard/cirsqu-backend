@@ -2,8 +2,8 @@ import { Controller, Res, Post, Body, Get, UseGuards, Req } from '@nestjs/common
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '@nestjs/passport';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
+import { AuthGuard } from './guards/auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -30,14 +30,14 @@ export class AuthController {
     res.end();
   }
 
-  @UseGuards(AuthGuard('cookie-or-bearer'))
+  @UseGuards(AuthGuard)
   @Get('custom-token')
   async generateCustomToken(@Req() { user }: { user: UserRecord }) {
     const token = await this.authService.generateCustomToken(user);
     return { token };
   }
 
-  @UseGuards(AuthGuard('cookie-or-bearer'))
+  @UseGuards(AuthGuard)
   @Get('user-data')
   async getUserData(@Req() { user }: { user: UserRecord }) {
     return user.toJSON();
