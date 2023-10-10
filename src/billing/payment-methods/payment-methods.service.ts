@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { StripeService } from '../../common/services/stripe.service';
 import Stripe from 'stripe';
 
@@ -7,44 +7,44 @@ export class PaymentMethodsService {
   private readonly logger = new Logger(PaymentMethodsService.name);
   constructor(private readonly stripe: StripeService) {}
 
-  async list(customerId: string) {
+  async list(customerId: string, pagination?: Stripe.PaginationParams) {
     try {
-      const { data } = await this.stripe.customers.listPaymentMethods(customerId, { type: 'card' });
-      return data;
-    } catch (error) {
-      this.logger.error(`Error listing payment methods for customer ${customerId}: `, error);
-      throw error;
+      return await this.stripe.customers.listPaymentMethods(customerId, { ...pagination });
+    } catch (error: any) {
+      this.logger.error(`Failed to list payment methods for customer ${customerId}: ${error.message}`);
+
+      throw new BadGatewayException('Unable to fetch payment method list');
     }
   }
 
-  async first(customerId: string) {
+  async find(customerId: string, paymentMethodId: string) {
     try {
-      const paymentMethods = await this.list(customerId);
-      if (paymentMethods.length === 0) {
-        throw new BadRequestException(`No Payment Methods found for Customer ${customerId}`);
-      }
-      return paymentMethods[0];
-    } catch (error) {
-      this.logger.error(`Error retrieving first payment method for customer ${customerId}: `, error);
-      throw error;
+      const paymentMethod = await this.stripe.paymentMethods.retrieve(paymentMethodId);
+      if (!paymentMethod || paymentMethod?.customer !== customerId) throw new Error('Payment method not found');
+      if ('deleted' in paymentMethod) throw new Error('Payment method has been deleted');
+      return paymentMethod;
+    } catch (error: any) {
+      this.logger.error(`Failed to retrieve payment method ${paymentMethodId}: ${error.message}`);
+
+      throw new NotFoundException(error.message);
     }
   }
 
   async exists(customerId: string) {
     const paymentMethods = await this.list(customerId);
-    return paymentMethods.length > 0;
+    return paymentMethods.data.length > 0;
   }
 
   async has(customerId: string, paymentMethodId: string): Promise<boolean> {
-    const paymentMethods = await this.list(customerId);
-    return paymentMethods.some((pm) => pm.id === paymentMethodId);
+    try {
+      const paymentMethod = await this.find(customerId, paymentMethodId);
+      return !!paymentMethod;
+    } catch {
+      return false;
+    }
   }
 
   async attach(customerId: string, paymentMethodId: string) {
-    if (await this.exists(customerId)) {
-      throw new BadRequestException('Customer already has at least one payment method attached.');
-    }
-
     try {
       return await this.stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
     } catch (error) {
