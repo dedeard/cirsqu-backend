@@ -1,10 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { StripeService } from '../../common/services/stripe.service';
 import { ConfigService } from '@nestjs/config';
+import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
 
 @Injectable()
-export class CheckoutService {
-  private readonly logger = new Logger(CheckoutService.name);
+export class CheckoutSessionsService {
+  private readonly logger = new Logger(CheckoutSessionsService.name);
 
   constructor(
     private readonly config: ConfigService,
@@ -26,7 +27,7 @@ export class CheckoutService {
     }
   }
 
-  async create(customerId: string, priceId: string) {
+  async create(customerId: string, { priceId }: CreateCheckoutSessionDto) {
     const price = await this.findPrice(priceId);
 
     try {
