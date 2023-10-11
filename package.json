@@ -31,7 +31,6 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
-    "currency-symbol-map": "^5.1.0",
     "file-type": "^16.5.4",
     "firebase-admin": "^11.10.1",
     "passport": "^0.6.0",
