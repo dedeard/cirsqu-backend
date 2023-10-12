@@ -1,7 +1,8 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { StripeService } from '../../common/services/stripe.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import Stripe from 'stripe';
 
 @Injectable()
 export class CheckoutSessionsService {
@@ -24,6 +25,31 @@ export class CheckoutSessionsService {
       this.logger.error(`Failed to retrieve price ${priceId}: ${error.message}`);
 
       throw new NotFoundException('Invalid price ID provided');
+    }
+  }
+
+  async list(customerId: string, pagination?: Stripe.PaginationParams) {
+    try {
+      return await this.stripe.checkoutSessions.list({ customer: customerId, ...pagination });
+    } catch (error: any) {
+      this.logger.error(`Failed to list checkout sessions for customer ${customerId}: ${error.message}`);
+
+      throw new BadGatewayException('Unable to fetch checkout session list');
+    }
+  }
+
+  async find(customerId: string, sessionId: string) {
+    try {
+      const session = await this.stripe.checkoutSessions.retrieve(sessionId);
+
+      if (!session || session?.customer !== customerId) throw new Error('Checkout session not found');
+      if ('deleted' in session) throw new Error('Checkout session has been deleted');
+
+      return session;
+    } catch (error: any) {
+      this.logger.error(`Failed to retrieve Checkout session ${sessionId}: ${error.message}`);
+
+      throw new NotFoundException('Invalid Checkout session ID provided');
     }
   }
 
