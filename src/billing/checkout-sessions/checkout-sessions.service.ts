@@ -62,8 +62,8 @@ export class CheckoutSessionsService {
         line_items: [{ price: priceId, quantity: 1 }],
         customer: customerId,
         mode: price.recurring ? 'subscription' : 'payment',
-        cancel_url: `${this.config.get('FRONTEND_URL', 'http://localhost:3001')}/plans?cancel=true`,
-        success_url: `${this.config.get('FRONTEND_URL', 'http://localhost:3001')}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${this.config.get('FRONTEND_URL', 'http://localhost:3001')}/pro/checkout?plan=${price.lookup_key}&cancel=true`,
+        success_url: `${this.config.get('FRONTEND_URL', 'http://localhost:3001')}/pro/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       });
     } catch (error: any) {
       this.logger.error(`Failed to create checkout session for customer ${customerId}: ${error.message}`);
