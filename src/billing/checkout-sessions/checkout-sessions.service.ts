@@ -1,4 +1,4 @@
-import { BadGatewayException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { StripeService } from '../../common/services/stripe.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
@@ -12,6 +12,22 @@ export class CheckoutSessionsService {
     private readonly config: ConfigService,
     private readonly stripe: StripeService,
   ) {}
+
+  async validateSubscriptionCreation(customerId: string, priceId: string) {
+    const customerSubscriptions = await this.stripe.subscriptions.list({ customer: customerId });
+
+    // Check if a subscription with the given priceId already exists
+    if (customerSubscriptions.data.some((subscription) => subscription.items.data.find((el) => el.price?.id === priceId))) {
+      throw new BadRequestException('A subscription with this price ID already exists for the customer.');
+    }
+
+    // Check if there are any active subscriptions that aren't set to cancel
+    if (customerSubscriptions.data.some((subscription) => !subscription.cancel_at)) {
+      throw new BadRequestException(
+        'The customer already has an active subscription. Please cancel the existing subscription before creating a new one.',
+      );
+    }
+  }
 
   async findPrice(priceId: string) {
     try {
@@ -55,6 +71,7 @@ export class CheckoutSessionsService {
 
   async create(customerId: string, { priceId }: CreateCheckoutSessionDto) {
     const price = await this.findPrice(priceId);
+    await this.validateSubscriptionCreation(customerId, priceId);
 
     try {
       return await this.stripe.checkoutSessions.create({
