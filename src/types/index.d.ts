@@ -10,6 +10,13 @@ declare global {
     avatar?: string | null;
     bio?: string | null;
     website?: string | null;
+    subscriptions?: {
+      id: string;
+      status: string;
+      recurring: boolean;
+      cancelAt: number | null;
+      priceId?: string;
+    }[];
   }
 
   interface IUser extends UserRecord {

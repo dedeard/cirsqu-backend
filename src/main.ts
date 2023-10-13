@@ -12,7 +12,7 @@ function exceptionFactory(errors: ValidationError[]) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Get configuration service instance
   const config = app.get(ConfigService);

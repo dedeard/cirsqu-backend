@@ -11,16 +11,16 @@ export class CheckoutSessionsController {
 
   @Get()
   list(@Req() { user }: { user: IUser }, @Query() paginations: Stripe.PaginationParams) {
-    return this.checkoutSessionsService.list(user.profile.stripeCustomerId, paginations);
+    return this.checkoutSessionsService.list(user, paginations);
   }
 
   @Get(':id')
   find(@Req() { user }: { user: IUser }, @Param('id') sessionId: string) {
-    return this.checkoutSessionsService.find(user.profile.stripeCustomerId, sessionId);
+    return this.checkoutSessionsService.find(user, sessionId);
   }
 
   @Post()
   create(@Req() { user }: { user: IUser }, @Body() data: CreateCheckoutSessionDto) {
-    return this.checkoutSessionsService.create(user.profile.stripeCustomerId, data);
+    return this.checkoutSessionsService.create(user, data);
   }
 }

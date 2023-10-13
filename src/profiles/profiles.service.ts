@@ -115,4 +115,23 @@ export class ProfilesService {
 
     return name;
   }
+
+  async findByStripeCustomerId(customerId: string) {
+    const snapshot = await this.collection.where('stripeCustomerId', '==', customerId).get();
+    if (snapshot.empty) {
+      throw new NotFoundException('Profile not found.');
+    }
+    const profiles: { id: string; data: IProfile }[] = [];
+    for (const doc of snapshot.docs) {
+      profiles.push({ id: doc.id, data: doc.data() as IProfile });
+    }
+    return profiles[0];
+  }
+
+  async updateSubscriptions(
+    userId: string,
+    subscriptions: { id: string; status: string; recurring: boolean; cancelAt: number | null; priceId?: string }[],
+  ) {
+    await this.collection.doc(userId).update({ subscriptions });
+  }
 }
