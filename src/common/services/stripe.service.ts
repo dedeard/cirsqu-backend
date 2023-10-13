@@ -11,6 +11,7 @@ export class StripeService {
   readonly subscriptions: Stripe.SubscriptionsResource;
   readonly paymentMethods: Stripe.PaymentMethodsResource;
   readonly checkoutSessions: Stripe.Checkout.SessionsResource;
+  readonly invoices: Stripe.InvoicesResource;
 
   constructor(private readonly config: ConfigService) {
     const stripe = new Stripe(config.getOrThrow('STRIPE_SECRET_KEY'), { apiVersion: '2023-08-16' });
@@ -21,5 +22,6 @@ export class StripeService {
     this.subscriptions = stripe.subscriptions;
     this.paymentMethods = stripe.paymentMethods;
     this.checkoutSessions = stripe.checkout.sessions;
+    this.invoices = stripe.invoices;
   }
 }
