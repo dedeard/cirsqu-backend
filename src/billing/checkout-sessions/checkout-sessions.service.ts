@@ -16,7 +16,7 @@ export class CheckoutSessionsService {
   async throwIfCantCreateSubscription(user: IUser, recurring: boolean) {
     const { subscription } = user.profile;
 
-    if (subscription.lifetime.paymentIntentStatus === 'succeeded') {
+    if (subscription.lifetime?.paymentIntentStatus === 'succeeded') {
       throw new BadRequestException('You already have a lifetime subscription. No need to subscribe again.');
     }
 
@@ -29,7 +29,7 @@ export class CheckoutSessionsService {
       }
     } else {
       const existingRecurringStatus = subscription.recurring?.subscriptionStatus;
-      if (existingRecurringStatus !== 'canceled') {
+      if (existingRecurringStatus && existingRecurringStatus !== 'canceled') {
         throw new BadRequestException(
           'You currently have an active recurring subscription. Please cancel that before subscribing to a non-recurring plan.',
         );

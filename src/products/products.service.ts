@@ -14,10 +14,12 @@ export class ProductsService {
 
       const products = await this.stripe.products.list({ active: true, ids: productIds });
 
-      return products.data.map((product) => ({
-        ...product,
-        price: prices.data.find((price) => price.product.toString() === product.id),
-      }));
+      return products.data
+        .map((product) => ({
+          ...product,
+          price: prices.data.find((price) => price.product.toString() === product.id),
+        }))
+        .sort((a, b) => a.price.unit_amount - b.price.unit_amount);
     } catch (error) {
       this.logger.error(`Failed to list products: ${error.message}`);
 

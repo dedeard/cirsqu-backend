@@ -30,20 +30,28 @@ export class StripeWebhookService {
     const event = this.validateSignature(signature, payload);
 
     switch (event.type) {
-      case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
         await this.onCreateOrUpdate(event.data.object, true);
         break;
 
-      case 'payment_intent.succeeded':
-      case 'payment_intent.created':
-        await this.onCreateOrUpdate(event.data.object, false);
+      case 'checkout.session.completed':
+        await this.onSessionComplete(event.data.object);
         break;
 
       default:
         this.logger.warn(`Unhandled event type: ${event.type}`, event.object);
         break;
+    }
+  }
+
+  async onSessionComplete(object: Record<string, any>) {
+    if (object.payment_intent) {
+      const paymentIntent = await this.stripe.paymentIntents.retrieve(object.payment_intent);
+      return this.onCreateOrUpdate(paymentIntent, false);
+    } else if (object.subscription) {
+      const subscription = await this.stripe.subscriptions.retrieve(object.subscription);
+      return this.onCreateOrUpdate(subscription, true);
     }
   }
 
@@ -53,11 +61,15 @@ export class StripeWebhookService {
     const subscription = data.subscription;
 
     if (recurring) {
-      subscription.recurring.subscriptionId = object.id;
-      subscription.recurring.subscriptionStatus = object.status;
+      subscription.recurring = {
+        subscriptionId: object.id,
+        subscriptionStatus: object.status,
+      };
     } else {
-      subscription.lifetime.paymentIntentId = object.id;
-      subscription.lifetime.paymentIntentStatus = object.status;
+      subscription.lifetime = {
+        paymentIntentId: object.id,
+        paymentIntentStatus: object.status,
+      };
     }
 
     await this.profilesService.updateSubscription(id, subscription);
