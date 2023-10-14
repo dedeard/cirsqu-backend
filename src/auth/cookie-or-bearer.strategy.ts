@@ -5,7 +5,7 @@ import { Request } from 'express';
 import { AdminService } from '../common/services/admin.service';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import { ProfilesService } from '../profiles/profiles.service';
-import isPremium from 'src/common/utils/is-premium';
+import isPremium from '../common/utils/is-premium';
 
 @Injectable()
 export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-or-bearer') {

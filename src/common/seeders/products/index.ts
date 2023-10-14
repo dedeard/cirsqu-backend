@@ -21,27 +21,31 @@ const main = async () => {
         features: product.features.map((name) => ({ name })),
         active: true,
       });
+      console.log('Updated product: ', remoteProduct.name);
     } else {
       remoteProduct = await stripe.products.create({
         name: product.name,
         description: product.description,
         features: product.features.map((name) => ({ name })),
       });
+      console.log('Created product: ', remoteProduct.name);
     }
 
     const existingPrice = existingPrices.data.find((el) => el.product === remoteProduct.id);
     if (existingPrice) {
-      await stripe.prices.update(existingPrice.id, {
+      const price = await stripe.prices.update(existingPrice.id, {
         lookup_key: product.price.lookup_key,
         active: true,
       });
+      console.log('Updated price: ', price.lookup_key);
     } else {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
-      await stripe.prices.create({
+      const price = await stripe.prices.create({
         product: remoteProduct.id,
         ...product.price,
       });
+      console.log('Created price: ', price.lookup_key);
     }
   }
 };
