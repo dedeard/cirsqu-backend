@@ -10,11 +10,11 @@ export class SubscriptionsController {
 
   @Get()
   list(@Req() { user }: { user: IUser }, @Query() paginations: Stripe.PaginationParams) {
-    return this.subscriptionsService.list(user.profile.stripeCustomerId, paginations);
+    return this.subscriptionsService.list(user.profile.subscription.customerId, paginations);
   }
 
   @Get(':id')
   find(@Req() { user }: { user: IUser }, @Param('id') id: string) {
-    return this.subscriptionsService.find(user.profile.stripeCustomerId, id);
+    return this.subscriptionsService.find(user.profile.subscription.customerId, id);
   }
 }

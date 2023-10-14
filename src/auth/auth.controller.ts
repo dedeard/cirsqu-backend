@@ -32,7 +32,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Get('custom-token')
-  async generateCustomToken(@Req() { user }: { user: UserRecord }) {
+  async generateCustomToken(@Req() { user }: { user: UserRecord & { premium: boolean } }) {
     const token = await this.authService.generateCustomToken(user);
     return { token };
   }

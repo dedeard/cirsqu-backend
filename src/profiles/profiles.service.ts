@@ -70,7 +70,17 @@ export class ProfilesService {
       email: user.email,
       metadata: { userId: user.uid, username: data.username },
     });
-    await this.collection.doc(user.uid).set({ ...data, avatar, stripeCustomerId: customer.id, createdAt: this.serverTimestamp() });
+
+    const profile: IProfile = {
+      name: data.name,
+      username: data.username,
+      avatar: avatar,
+      subscription: {
+        customerId: customer.id,
+      },
+    };
+
+    await this.collection.doc(user.uid).set({ ...profile, createdAt: this.serverTimestamp() });
 
     return this.find(user.uid);
   }
@@ -87,7 +97,7 @@ export class ProfilesService {
     await this.db.runTransaction(async (t) => {
       t.update(this.collection.doc(user.uid), { ...dataToUpdata });
       if (user.profile.username !== dataToUpdata.username || user.profile.name !== dataToUpdata.name) {
-        await this.stripe.customers.update(user.profile.stripeCustomerId, {
+        await this.stripe.customers.update(user.profile.subscription.customerId, {
           name: dataToUpdata.name,
           metadata: { username: dataToUpdata.username },
         });
@@ -117,7 +127,7 @@ export class ProfilesService {
   }
 
   async findByStripeCustomerId(customerId: string) {
-    const snapshot = await this.collection.where('stripeCustomerId', '==', customerId).get();
+    const snapshot = await this.collection.where('subscription.customerId', '==', customerId).get();
     if (snapshot.empty) {
       throw new NotFoundException('Profile not found.');
     }
@@ -128,10 +138,7 @@ export class ProfilesService {
     return profiles[0];
   }
 
-  async updateSubscriptions(
-    userId: string,
-    subscriptions: { id: string; status: string; recurring: boolean; cancelAt: number | null; priceId?: string }[],
-  ) {
-    await this.collection.doc(userId).update({ subscriptions });
+  async updateSubscription(userId: string, subscription: ISubscription) {
+    await this.collection.doc(userId).update({ subscription });
   }
 }

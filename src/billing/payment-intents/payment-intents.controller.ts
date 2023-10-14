@@ -10,11 +10,11 @@ export class PaymentIntentsController {
 
   @Get()
   list(@Req() { user }: { user: IUser }, @Query() paginations: Stripe.PaginationParams) {
-    return this.paymentIntentsService.list(user.profile.stripeCustomerId, paginations);
+    return this.paymentIntentsService.list(user.profile.subscription.customerId, paginations);
   }
 
   @Get(':id')
   find(@Req() { user }: { user: IUser }, @Param('id') id: string) {
-    return this.paymentIntentsService.find(user.profile.stripeCustomerId, id);
+    return this.paymentIntentsService.find(user.profile.subscription.customerId, id);
   }
 }

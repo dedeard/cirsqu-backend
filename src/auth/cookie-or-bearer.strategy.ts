@@ -5,6 +5,7 @@ import { Request } from 'express';
 import { AdminService } from '../common/services/admin.service';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import { ProfilesService } from '../profiles/profiles.service';
+import isPremium from 'src/common/utils/is-premium';
 
 @Injectable()
 export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-or-bearer') {
@@ -24,6 +25,7 @@ export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-o
       const decoded = await this.admin.auth.verifySessionCookie(session, true);
       const user = (await this.admin.auth.getUser(decoded.uid)) as IUser;
       const profile = await this.profilesService.find(user.uid);
+      user.premium = isPremium(profile.subscription);
       if (profile) user.profile = profile;
       return user;
     } catch (err: any) {

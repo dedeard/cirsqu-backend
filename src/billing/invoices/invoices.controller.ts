@@ -10,11 +10,11 @@ export class InvoicesController {
 
   @Get()
   list(@Req() { user }: { user: IUser }, @Query() paginations: Stripe.PaginationParams) {
-    return this.invoicesService.list(user.profile.stripeCustomerId, paginations);
+    return this.invoicesService.list(user.profile.subscription.customerId, paginations);
   }
 
   @Get(':id')
   find(@Req() { user }: { user: IUser }, @Param('id') id: string) {
-    return this.invoicesService.find(user.profile.stripeCustomerId, id);
+    return this.invoicesService.find(user.profile.subscription.customerId, id);
   }
 }

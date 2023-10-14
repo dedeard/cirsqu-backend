@@ -17,9 +17,9 @@ export class AuthService {
     }
   }
 
-  async generateCustomToken(user: UserRecord) {
+  async generateCustomToken(user: UserRecord & { premium: boolean }) {
     try {
-      return await this.admin.auth.createCustomToken(user.uid);
+      return await this.admin.auth.createCustomToken(user.uid, { premium: user.premium });
     } catch (err: any) {
       this.logger.error(err);
       throw new InternalServerErrorException('Failed to generate custom token.');

@@ -13,27 +13,28 @@ export class CheckoutSessionsService {
     private readonly stripe: StripeService,
   ) {}
 
-  async validateCanCreateSubscription(user: IUser, priceId: string) {
-    const { subscriptions } = user.profile;
-    if (!subscriptions) return true;
+  async throwIfCantCreateSubscription(user: IUser, recurring: boolean) {
+    const { subscription } = user.profile;
 
-    const lifetimeSub = subscriptions.find((s) => !s.recurring && s.status === 'succeeded');
-    const alreadyExistsSub = subscriptions.find((s) => s.priceId === priceId);
-    const recurringSub = subscriptions.find((s) => s.recurring && s.status === 'active' && !s.cancelAt);
-
-    if (lifetimeSub) {
-      throw new BadRequestException('You already have a non-recurring subscription.');
+    if (subscription.lifetime.paymentIntentStatus === 'succeeded') {
+      throw new BadRequestException('You already have a lifetime subscription. No need to subscribe again.');
     }
 
-    if (alreadyExistsSub) {
-      throw new BadRequestException('You are already subscribed to this product.');
+    if (recurring) {
+      const existingSubscriptionId = subscription.recurring?.subscriptionId;
+      if (existingSubscriptionId) {
+        throw new BadRequestException(
+          `You are already subscribed to a recurring plan. There's no need to subscribe again. However, you can manage, update, or cancel your subscription through the portal page.`,
+        );
+      }
+    } else {
+      const existingRecurringStatus = subscription.recurring?.subscriptionStatus;
+      if (existingRecurringStatus !== 'canceled') {
+        throw new BadRequestException(
+          'You currently have an active recurring subscription. Please cancel that before subscribing to a non-recurring plan.',
+        );
+      }
     }
-
-    if (recurringSub) {
-      throw new BadRequestException('You have an active recurring subscription. Please cancel it before creating a new one.');
-    }
-
-    return true;
   }
 
   async findPrice(priceId: string) {
@@ -53,9 +54,9 @@ export class CheckoutSessionsService {
 
   async list(user: IUser, pagination?: Stripe.PaginationParams) {
     try {
-      return await this.stripe.checkoutSessions.list({ customer: user.profile.stripeCustomerId, ...pagination });
+      return await this.stripe.checkoutSessions.list({ customer: user.profile.subscription.customerId, ...pagination });
     } catch (error: any) {
-      this.logger.error(`Failed to list checkout sessions for customer ${user.profile.stripeCustomerId}: ${error.message}`);
+      this.logger.error(`Failed to list checkout sessions for customer ${user.profile.subscription.customerId}: ${error.message}`);
 
       throw new BadGatewayException('Unable to fetch checkout session list');
     }
@@ -65,7 +66,7 @@ export class CheckoutSessionsService {
     try {
       const session = await this.stripe.checkoutSessions.retrieve(sessionId);
 
-      if (!session || session?.customer !== user.profile.stripeCustomerId) throw new Error('Checkout session not found');
+      if (!session || session?.customer !== user.profile.subscription.customerId) throw new Error('Checkout session not found');
       if ('deleted' in session) throw new Error('Checkout session has been deleted');
 
       return session;
@@ -78,19 +79,19 @@ export class CheckoutSessionsService {
 
   async create(user: IUser, { priceId }: CreateCheckoutSessionDto) {
     const price = await this.findPrice(priceId);
-    await this.validateCanCreateSubscription(user, priceId);
+    await this.throwIfCantCreateSubscription(user, !!price.recurring);
 
     try {
       return await this.stripe.checkoutSessions.create({
         billing_address_collection: 'auto',
         line_items: [{ price: priceId, quantity: 1 }],
-        customer: user.profile.stripeCustomerId,
+        customer: user.profile.subscription.customerId,
         mode: price.recurring ? 'subscription' : 'payment',
         cancel_url: `${this.config.get('FRONTEND_URL', 'http://localhost:3001')}/pro/checkout?plan=${price.lookup_key}&cancel=true`,
         success_url: `${this.config.get('FRONTEND_URL', 'http://localhost:3001')}/pro/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       });
     } catch (error: any) {
-      this.logger.error(`Failed to create checkout session for customer ${user.profile.stripeCustomerId}: ${error.message}`);
+      this.logger.error(`Failed to create checkout session for customer ${user.profile.subscription.customerId}: ${error.message}`);
 
       throw error;
     }

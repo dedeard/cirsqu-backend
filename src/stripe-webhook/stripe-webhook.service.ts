@@ -28,7 +28,7 @@ export class StripeWebhookService {
 
   async handler(signature: string | Buffer, payload: string | Buffer) {
     const event = this.validateSignature(signature, payload);
-    console.log(event);
+
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
@@ -48,38 +48,18 @@ export class StripeWebhookService {
   }
 
   async onCreateOrUpdate(object: Record<string, any>, recurring: boolean) {
-    // Fetch the user profile by the Stripe customer ID
     const { id, data } = await this.profilesService.findByStripeCustomerId(object.customer);
 
-    // Get the existing subscriptions or an empty array if there are none
-    let subscriptions = data.subscriptions || [];
+    const subscription = data.subscription;
 
-    // Update the status, cancelAt, and priceId of any subscription that matches object.id
-    subscriptions = subscriptions.map((subscription) =>
-      subscription.id === object.id
-        ? {
-            ...subscription,
-            status: object.status,
-            cancelAt: object.cancel_at || null,
-            priceId: object?.items?.data?.[0]?.price?.id,
-          }
-        : subscription,
-    );
-
-    // If no existing subscription matches object.id, add a new one to the start of the array
-    if (!subscriptions.find((subscription) => subscription.id === object.id)) {
-      const newSubscription = {
-        id: object.id,
-        status: object.status,
-        recurring,
-        cancelAt: object.cancel_at || null,
-        priceId: object?.items?.data?.[0]?.price?.id,
-      };
-
-      subscriptions = [newSubscription, ...subscriptions];
+    if (recurring) {
+      subscription.recurring.subscriptionId = object.id;
+      subscription.recurring.subscriptionStatus = object.status;
+    } else {
+      subscription.lifetime.paymentIntentId = object.id;
+      subscription.lifetime.paymentIntentStatus = object.status;
     }
 
-    // Update the user's subscriptions in the database
-    await this.profilesService.updateSubscriptions(id, subscriptions);
+    await this.profilesService.updateSubscription(id, subscription);
   }
 }
