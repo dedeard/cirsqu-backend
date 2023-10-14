@@ -1,4 +1,5 @@
-export default function isPremium(subscription?: ISubscription) {
-  if (subscription.lifetime?.paymentIntentStatus === 'succeeded') return true;
-  return subscription.recurring?.subscriptionStatus === 'active';
+export default function isPremium(profile?: IProfile) {
+  const subscription = profile?.subscription;
+  if (subscription?.lifetime?.paymentIntentStatus === 'succeeded') return true;
+  return subscription?.recurring?.subscriptionStatus === 'active';
 }

@@ -25,7 +25,7 @@ export class CookieOrBearerStrategy extends PassportStrategy(Strategy, 'cookie-o
       const decoded = await this.admin.auth.verifySessionCookie(session, true);
       const user = (await this.admin.auth.getUser(decoded.uid)) as IUser;
       const profile = await this.profilesService.find(user.uid);
-      user.premium = isPremium(profile.subscription);
+      user.premium = isPremium(profile);
       if (profile) user.profile = profile;
       return user;
     } catch (err: any) {
