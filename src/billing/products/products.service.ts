@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { StripeService } from '../common/services/stripe.service';
+import { StripeService } from '../../common/services/stripe.service';
 
 @Injectable()
 export class ProductsService {

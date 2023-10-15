@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { StripeService } from '../common/services/stripe.service';
-import { ProfilesRepository } from '../profiles/profiles.repository';
-import isPremium from '../common/utils/is-premium';
+import { StripeService } from '../../common/services/stripe.service';
+import { ProfilesRepository } from '../../profiles/profiles.repository';
+import isPremium from '../../common/utils/is-premium';
 import Stripe from 'stripe';
 
 @Injectable()
-export class StripeWebhookService {
-  private readonly logger = new Logger(StripeWebhookService.name);
+export class WebhookService {
+  private readonly logger = new Logger(WebhookService.name);
 
   constructor(
     private readonly stripe: StripeService,
