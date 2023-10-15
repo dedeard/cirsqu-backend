@@ -1,10 +1,10 @@
 import Stripe from 'stripe';
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { CheckoutSessionsService } from './checkout-sessions.service';
-import { AuthProfileGuard } from '../../auth/guards/auth-profile.guard';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { AuthGuard } from '../../auth/auth.guard';
 
-@UseGuards(AuthProfileGuard)
+@UseGuards(AuthGuard)
 @Controller('checkout-sessions')
 export class CheckoutSessionsController {
   constructor(private readonly checkoutSessionsService: CheckoutSessionsService) {}

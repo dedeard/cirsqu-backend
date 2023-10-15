@@ -1,9 +1,9 @@
 import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
-import { AuthProfileGuard } from '../../auth/guards/auth-profile.guard';
 import Stripe from 'stripe';
+import { AuthGuard } from '../../auth/auth.guard';
 
-@UseGuards(AuthProfileGuard)
+@UseGuards(AuthGuard)
 @Controller('subscriptions')
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}

@@ -5,26 +5,25 @@ import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ValidateImagePipe } from '../common/pipes/validate-image.pipe';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { AuthProfileGuard } from '../auth/guards/auth-profile.guard';
+import { AuthGuard } from '../auth/auth.guard';
+import { AuthMetaData } from 'src/auth/auth-metadata.guard';
 
+@UseGuards(AuthGuard)
 @Controller('profiles')
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 
-  @UseGuards(AuthProfileGuard)
   @Get()
   find(@Req() { user }: { user: IUser }) {
     return user.profile;
   }
 
-  @UseGuards(AuthGuard)
   @Post()
+  @AuthMetaData('skip-profile')
   create(@Req() { user }: { user: UserRecord }, @Body() createProfileDto: CreateProfileDto) {
     return this.profilesService.create(user, createProfileDto);
   }
 
-  @UseGuards(AuthProfileGuard)
   @Put()
   @UseInterceptors(FileInterceptor('avatar'))
   update(

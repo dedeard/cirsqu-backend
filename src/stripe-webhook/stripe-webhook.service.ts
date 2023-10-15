@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StripeService } from '../common/services/stripe.service';
-import { ProfilesService } from '../profiles/profiles.service';
+import { ProfilesRepository } from '../profiles/profiles.repository';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class StripeWebhookService {
   constructor(
     private readonly stripe: StripeService,
     private readonly config: ConfigService,
-    private readonly profilesService: ProfilesService,
+    private readonly profilesRepository: ProfilesRepository,
   ) {}
 
   validateSignature(signature: string | Buffer, payload: string | Buffer) {
@@ -56,7 +56,7 @@ export class StripeWebhookService {
   }
 
   async onCreateOrUpdate(object: Record<string, any>, recurring: boolean) {
-    const { id, data } = await this.profilesService.findByStripeCustomerId(object.customer);
+    const { id, data } = await this.profilesRepository.findByCustomerId(object.customer);
 
     const subscription = data.subscription;
 
@@ -72,6 +72,6 @@ export class StripeWebhookService {
       };
     }
 
-    await this.profilesService.updateSubscription(id, subscription);
+    await this.profilesRepository.update(id, { subscription });
   }
 }

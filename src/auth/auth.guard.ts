@@ -2,4 +2,4 @@ import { Injectable } from '@nestjs/common';
 import { AuthGuard as BaseAuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class AuthGuard extends BaseAuthGuard('cookie-or-bearer') {}
+export class AuthGuard extends BaseAuthGuard('firebase') {}
