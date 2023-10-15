@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StripeService } from '../common/services/stripe.service';
 import { ProfilesRepository } from '../profiles/profiles.repository';
+import isPremium from '../common/utils/is-premium';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -72,6 +73,6 @@ export class StripeWebhookService {
       };
     }
 
-    await this.profilesRepository.update(id, { subscription });
+    await this.profilesRepository.update(id, { premium: isPremium(subscription), subscription });
   }
 }

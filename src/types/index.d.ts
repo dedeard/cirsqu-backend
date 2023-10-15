@@ -21,6 +21,7 @@ declare global {
     bio?: string | null;
     website?: string | null;
     identifier?: string;
+    premium?: boolean;
     subscription: ISubscription;
   }
 

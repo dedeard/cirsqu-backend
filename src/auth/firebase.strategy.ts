@@ -71,7 +71,7 @@ export class FirebaseStrategy extends PassportStrategy(Strategy, 'firebase') {
 
     const profileSnapshot = await this.profilesRepository.find(userRecord.uid);
 
-    userRecord.premium = isPremium(profileSnapshot?.data);
+    userRecord.premium = isPremium(profileSnapshot?.data.subscription);
     userRecord.profile = profileSnapshot?.data;
 
     return userRecord;
