@@ -1,9 +1,9 @@
 import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { PaymentIntentsService } from './payment-intents.service';
 import Stripe from 'stripe';
-import { AuthProfileGuard } from 'src/auth/guards/auth-profile.guard';
+import { AuthGuard } from '../../auth/auth.guard';
 
-@UseGuards(AuthProfileGuard)
+@UseGuards(AuthGuard)
 @Controller('payment-intents')
 export class PaymentIntentsController {
   constructor(private readonly paymentIntentsService: PaymentIntentsService) {}

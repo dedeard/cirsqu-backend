@@ -1,63 +1,36 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import admin from 'firebase-admin';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { CollectionReference, DocumentData } from 'firebase-admin/firestore';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import sharp from 'sharp';
-import { v4 as uuid } from 'uuid';
 import { StorageService } from '../common/services/storage.service';
 import urlToBuffer from '../common/utils/url-to-buffer';
 import { StripeService } from '../common/services/stripe.service';
+import { AdminService } from '../common/services/admin.service';
+import { randomUUID } from 'crypto';
+import { ProfilesRepository } from './profiles.repository';
 
 @Injectable()
 export class ProfilesService {
-  private readonly db = admin.firestore();
-  private readonly serverTimestamp = admin.firestore.FieldValue.serverTimestamp;
-  private readonly collection: FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData>;
+  public readonly collection: CollectionReference<DocumentData>;
 
   constructor(
+    private readonly repository: ProfilesRepository,
     private readonly storage: StorageService,
     private readonly stripe: StripeService,
+    private readonly admin: AdminService,
   ) {
-    this.collection = this.db.collection('profiles');
-  }
-
-  async usernameExists(username: string, excludeId?: string): Promise<boolean> {
-    const snapshot = await this.collection.where('username', '==', username).get();
-    if (snapshot.empty) {
-      return false;
-    }
-    for (const doc of snapshot.docs) {
-      if (doc.id !== excludeId) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  async findOrFail(uid: string): Promise<IProfile | null> {
-    const profile = await this.find(uid);
-    if (!profile) {
-      throw new NotFoundException('Profile not found.');
-    }
-    return profile;
-  }
-
-  async find(uid: string): Promise<IProfile | null> {
-    const doc = await this.collection.doc(uid).get();
-    if (doc.exists) {
-      return doc.data() as IProfile;
-    }
-    return null;
+    this.collection = this.repository.collection;
   }
 
   async create(user: UserRecord, data: CreateProfileDto) {
-    const usernameExists = await this.usernameExists(data.username);
+    const usernameExists = await this.repository.usernameExists(data.username);
     if (usernameExists) {
       throw new BadRequestException('Username already exists.');
     }
 
-    const profileExists = await this.find(user.uid);
+    const profileExists = await this.repository.find(user.uid);
     if (profileExists) {
       throw new BadRequestException('Profile already created.');
     }
@@ -80,13 +53,11 @@ export class ProfilesService {
       },
     };
 
-    await this.collection.doc(user.uid).set({ ...profile, createdAt: this.serverTimestamp() });
-
-    return this.find(user.uid);
+    await this.repository.create(user.uid, profile);
   }
 
   async update(user: IUser, data: UpdateProfileDto, buffer?: Buffer) {
-    const usernameExists = await this.usernameExists(data.username, user.uid);
+    const usernameExists = await this.repository.usernameExists(data.username, user.uid);
     if (usernameExists) {
       throw new BadRequestException('Username already exists.');
     }
@@ -94,8 +65,7 @@ export class ProfilesService {
     const dataToUpdata: UpdateProfileDto & { avatar?: string } = { ...data };
     if (buffer) dataToUpdata.avatar = await this.generateAvatar(buffer, user.profile.avatar);
 
-    await this.db.runTransaction(async (t) => {
-      t.update(this.collection.doc(user.uid), { ...dataToUpdata });
+    return this.repository.update(user.uid, dataToUpdata, async () => {
       if (user.profile.username !== dataToUpdata.username || user.profile.name !== dataToUpdata.name) {
         await this.stripe.customers.update(user.profile.subscription.customerId, {
           name: dataToUpdata.name,
@@ -103,8 +73,6 @@ export class ProfilesService {
         });
       }
     });
-
-    return this.findOrFail(user.uid);
   }
 
   async generateAvatar(bufferOrUrl: Buffer | string, old?: string) {
@@ -116,7 +84,7 @@ export class ProfilesService {
       buffer = bufferOrUrl;
     }
 
-    const name = 'avatar/' + uuid() + '.jpg';
+    const name = 'avatar/' + randomUUID() + '.jpg';
     const buff = await sharp(buffer).resize(200, 200, { fit: 'cover' }).toFormat('jpeg').toBuffer();
     await this.storage.save(name, buff);
     if (old) {
@@ -124,21 +92,5 @@ export class ProfilesService {
     }
 
     return name;
-  }
-
-  async findByStripeCustomerId(customerId: string) {
-    const snapshot = await this.collection.where('subscription.customerId', '==', customerId).get();
-    if (snapshot.empty) {
-      throw new NotFoundException('Profile not found.');
-    }
-    const profiles: { id: string; data: IProfile }[] = [];
-    for (const doc of snapshot.docs) {
-      profiles.push({ id: doc.id, data: doc.data() as IProfile });
-    }
-    return profiles[0];
-  }
-
-  async updateSubscription(userId: string, subscription: ISubscription) {
-    await this.collection.doc(userId).update({ subscription });
   }
 }

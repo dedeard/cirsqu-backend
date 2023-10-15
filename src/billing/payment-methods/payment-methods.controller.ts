@@ -1,9 +1,9 @@
 import Stripe from 'stripe';
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { PaymentMethodsService } from './payment-methods.service';
-import { AuthProfileGuard } from '../../auth/guards/auth-profile.guard';
+import { AuthGuard } from '../../auth/auth.guard';
 
-@UseGuards(AuthProfileGuard)
+@UseGuards(AuthGuard)
 @Controller('payment-methods')
 export class PaymentMethodsController {
   constructor(private readonly paymentMethodsService: PaymentMethodsService) {}
