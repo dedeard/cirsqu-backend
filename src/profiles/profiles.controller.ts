@@ -6,7 +6,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ValidateImagePipe } from '../common/pipes/validate-image.pipe';
 import { AuthGuard } from '../auth/auth.guard';
-import { AuthMetaData } from 'src/auth/auth-metadata.guard';
+import { AuthMetaData } from '../auth/auth-metadata.guard';
 
 @UseGuards(AuthGuard)
 @Controller('profiles')
