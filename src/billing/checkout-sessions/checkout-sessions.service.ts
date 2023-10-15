@@ -1,8 +1,7 @@
-import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { StripeService } from '../../common/services/stripe.service';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { StripeService } from '../../common/services/stripe.service';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
-import Stripe from 'stripe';
 
 @Injectable()
 export class CheckoutSessionsService {
@@ -52,27 +51,44 @@ export class CheckoutSessionsService {
     }
   }
 
-  async list(user: IUser, pagination?: Stripe.PaginationParams) {
-    try {
-      return await this.stripe.checkoutSessions.list({ customer: user.profile.subscription.customerId, ...pagination });
-    } catch (error: any) {
-      this.logger.error(`Failed to list checkout sessions for customer ${user.profile.subscription.customerId}: ${error.message}`);
+  private async getSession(sessionId: string, user: IUser) {
+    const session = await this.stripe.checkoutSessions.retrieve(sessionId);
 
-      throw new BadGatewayException('Unable to fetch checkout session list');
+    if (!session || session?.customer !== user.profile.subscription.customerId || 'deleted' in session)
+      throw new Error('Checkout session not found or has been deleted');
+
+    return session;
+  }
+
+  private async getInvoice(session: any) {
+    const invoice = await this.stripe.invoices.retrieve(session.invoice.toString());
+    return { session, invoice };
+  }
+
+  private async getPaymentIntent(session: any) {
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(session.payment_intent.toString());
+
+    if (paymentIntent.latest_charge) {
+      const charge = await this.stripe.charges.retrieve(paymentIntent.latest_charge.toString());
+      return { session, paymentIntent, charge };
     }
+
+    return { session, paymentIntent };
   }
 
   async find(user: IUser, sessionId: string) {
     try {
-      const session = await this.stripe.checkoutSessions.retrieve(sessionId);
+      const session = await this.getSession(sessionId, user);
 
-      if (!session || session?.customer !== user.profile.subscription.customerId) throw new Error('Checkout session not found');
-      if ('deleted' in session) throw new Error('Checkout session has been deleted');
+      if (session.invoice) {
+        return this.getInvoice(session);
+      } else if (session.payment_intent) {
+        return this.getPaymentIntent(session);
+      }
 
-      return session;
+      throw new Error('No invoice or payment intent found in the session');
     } catch (error: any) {
       this.logger.error(`Failed to retrieve Checkout session ${sessionId}: ${error.message}`);
-
       throw new NotFoundException('Invalid Checkout session ID provided');
     }
   }
