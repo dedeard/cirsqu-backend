@@ -13,13 +13,13 @@ export class AuthGuard extends BaseAuthGuard('firebase') {
     const request = context.switchToHttp().getRequest();
     const metadata = this.reflector.getAllAndOverride<AllowedMetaData[]>('auth', [context.getHandler(), context.getClass()]);
 
-    if (metadata.includes('skip')) {
+    if (metadata?.includes('skip')) {
       return true;
     }
 
-    super.canActivate(context);
+    await super.canActivate(context);
 
-    if (!request.user.profile && !metadata.includes('skip-profile')) {
+    if (!request.user?.profile && !metadata?.includes('skip-profile')) {
       throw new UnauthorizedException(`No profile found for the user with id - ${request.user.uid}`);
     }
 
