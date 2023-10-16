@@ -5,15 +5,12 @@ import { Request } from 'express';
 import { AdminService } from '../common/services/admin.service';
 import isPremium from '../common/utils/is-premium';
 import { ProfilesRepository } from '../profiles/profiles.repository';
-import { Reflector } from '@nestjs/core';
-import { AllowedMetaData } from './auth-metadata.guard';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 @Injectable()
 export class FirebaseStrategy extends PassportStrategy(Strategy, 'firebase') {
   private readonly logger = new Logger(FirebaseStrategy.name);
   constructor(
-    private readonly reflector: Reflector,
     private readonly admin: AdminService,
     private readonly profilesRepository: ProfilesRepository,
   ) {
@@ -22,17 +19,8 @@ export class FirebaseStrategy extends PassportStrategy(Strategy, 'firebase') {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const metadata = this.reflector.getAllAndOverride<AllowedMetaData[]>('auth', [context.getHandler(), context.getClass()]);
-
-    if (metadata.includes('skip')) {
-      return true;
-    }
 
     request.user = await this.validate(request);
-
-    if (!request.user.profile && !metadata.includes('skip-profile')) {
-      throw new UnauthorizedException(`No profile found for the user with id - ${request.user.uid}`);
-    }
 
     return true;
   }

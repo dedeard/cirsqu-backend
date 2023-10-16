@@ -51,11 +51,10 @@ export class CheckoutSessionsService {
     }
   }
 
-  private async getSession(sessionId: string, user: IUser) {
+  private async getSession(sessionId: string) {
     const session = await this.stripe.checkoutSessions.retrieve(sessionId);
 
-    if (!session || session?.customer !== user.profile.subscription.customerId || 'deleted' in session)
-      throw new Error('Checkout session not found or has been deleted');
+    if (!session || 'deleted' in session) throw new Error('Checkout session not found or has been deleted');
 
     return session;
   }
@@ -76,9 +75,9 @@ export class CheckoutSessionsService {
     return { session, paymentIntent };
   }
 
-  async find(user: IUser, sessionId: string) {
+  async find(sessionId: string) {
     try {
-      const session = await this.getSession(sessionId, user);
+      const session = await this.getSession(sessionId);
 
       if (session.invoice) {
         return this.getInvoice(session);
