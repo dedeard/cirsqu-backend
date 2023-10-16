@@ -8,7 +8,7 @@ export class SubscriptionsService {
   constructor(private readonly stripe: StripeService) {}
 
   // Find an active subscription for a user
-  async findActive(user: IUser) {
+  findActive(user: IUser) {
     const { subscription } = user.profile;
 
     if (subscription.lifetime?.paymentIntentStatus === 'succeeded') {
@@ -19,7 +19,7 @@ export class SubscriptionsService {
 
     if (subscription.recurring?.subscriptionStatus) {
       return this.stripe.subscriptions.retrieve(subscription.recurring.subscriptionId, {
-        expand: ['latest_invoice', 'next_pending_invoice_item_invoice'],
+        expand: ['latest_invoice', 'plan.product'],
       });
     }
 

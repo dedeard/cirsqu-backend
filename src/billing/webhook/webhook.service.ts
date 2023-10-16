@@ -62,10 +62,14 @@ export class WebhookService {
     const subscription = data.subscription;
 
     if (recurring) {
-      subscription.recurring = {
-        subscriptionId: object.id,
-        subscriptionStatus: object.status,
-      };
+      if (object.status === 'canceled') {
+        subscription.recurring = null;
+      } else {
+        subscription.recurring = {
+          subscriptionId: object.id,
+          subscriptionStatus: object.status,
+        };
+      }
     } else {
       subscription.lifetime = {
         paymentIntentId: object.id,

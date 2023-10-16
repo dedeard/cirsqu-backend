@@ -12,7 +12,7 @@ const getAllowedPrices = (prices: Stripe.Price[]) => {
 };
 
 const findConfiguration = (configs: Stripe.BillingPortal.Configuration[], identifier: string | number) =>
-  configs.find((el) => el.metadata.indentifier === identifier);
+  configs.find((el) => el.metadata.identifier === identifier);
 
 export default async function initConfiguration() {
   try {
@@ -21,7 +21,7 @@ export default async function initConfiguration() {
 
     const configs = await stripe.billingPortal.configurations.list({ limit: 100 });
 
-    const config = findConfiguration(configs.data, rawPortal.metadata.indentifier);
+    const config = findConfiguration(configs.data, rawPortal.metadata.identifier);
 
     if (config) {
       console.log('Updating protal configuration:', config.id);

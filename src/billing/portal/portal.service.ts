@@ -17,7 +17,7 @@ export class PortalService {
 
   async getConfiguration() {
     const { data } = await this.stripe.portalConfigurations.list({ limit: 100 });
-    const configuration = data.find((configuration) => configuration.metadata.indentifier === this.IDENTIFIER);
+    const configuration = data.find((configuration) => configuration.metadata.identifier === this.IDENTIFIER);
     if (!configuration) {
       throw new InternalServerErrorException(`No configuration found with identifier: ${this.IDENTIFIER}`);
     }

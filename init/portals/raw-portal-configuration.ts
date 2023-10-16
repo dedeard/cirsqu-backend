@@ -34,7 +34,7 @@ export default function getRawPortalConfiguration(
         mode: 'immediately',
         proration_behavior: 'create_prorations',
       },
-      subscription_pause: { enabled: true },
+      subscription_pause: { enabled: false },
       subscription_update: {
         default_allowed_updates: ['price', 'promotion_code'],
         enabled: true,
@@ -44,7 +44,7 @@ export default function getRawPortalConfiguration(
     },
     login_page: { enabled: false },
     metadata: {
-      indentifier: 'cirsqu-portal',
+      identifier: 'cirsqu-portal',
     },
   };
 
