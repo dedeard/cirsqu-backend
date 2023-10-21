@@ -14,9 +14,13 @@ function getRandomInt(min, max) {
 
 const fetchSubjects = async () => {
   const subjectsSnapshot = await subjectCollection.get();
-  const subjects = {};
+  const subjects: Record<string, { id: string; name: string; slug: string }> = {};
   subjectsSnapshot.docs.forEach((subject) => {
-    subjects[subject.data().slug] = subject.data().name;
+    subjects[subject.data().slug] = {
+      id: subject.id,
+      name: subject.data().name,
+      slug: subject.data().slug,
+    };
   });
   console.log('Fetched subjects');
   return subjects;
@@ -92,7 +96,7 @@ const updateAlgoliaIndex = async (subjects) => {
     slug: item.slug,
     description: item.description,
     seconds: calculateTotalSeconds(item.episodes),
-    subjects: item.subjects.map((slug) => subjects[slug]),
+    subjects: item.subjects.map((slug) => ({ slug: subjects[slug].slug, name: subjects[slug].name })),
     createdAt: item.createdAt,
     episodes: item.episodes.map((el) => episodes[item.slug + el.id]),
   }));
@@ -113,7 +117,7 @@ const initLessons = async () => {
         slug: item.slug,
         description: item.description,
         seconds: totalSeconds,
-        subjects: item.subjects.map((slug) => subjects[slug]),
+        subjects: item.subjects.map((slug) => subjects[slug].id),
         createdAt: admin.firestore.Timestamp.fromDate(new Date(item.createdAt * 1000)),
       };
 
