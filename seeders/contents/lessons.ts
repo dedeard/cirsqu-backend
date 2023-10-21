@@ -9,9 +9,7 @@ const subjectCollection = admin.firestore().collection('subjects');
 const client = algoliasearch(process.env.ALGOLIA_APP_ID, process.env.ALGOLIA_ADMIN_API_KEY);
 
 function getRandomInt(min, max) {
-  const randomInt = Math.floor(Math.random() * (max - min + 1)) + min;
-  console.log(`Generated random integer: ${randomInt}`);
-  return randomInt;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 const fetchSubjects = async () => {
@@ -55,8 +53,15 @@ const initEpisodes = async (lessonId, episodes, premiumRange) => {
       premium: i > premiumRange,
       downloadUrl: `https://www.youtube.com/watch?v=${episodes[i].id}`,
     };
-    await episodeCollection.add(episodeData);
-    console.log('Added an episode for lesson:', episodeData.title);
+
+    const snapshot = await episodeCollection.where('lessonId', '==', lessonId).where('videoId', '==', episodeData.videoId).get();
+    if (snapshot.empty) {
+      await episodeCollection.add(episodeData);
+      console.log('Added an episode for lesson:', lessonId);
+    } else {
+      await snapshot.docs[0].ref.update(episodeData);
+      console.log('Updated an episode for lesson:', lessonId);
+    }
   }
 };
 
