@@ -50,6 +50,7 @@ const initEpisodes = async (lessonId, episodes, premiumRange) => {
       title: episodes[i].title,
       seconds: episodes[i].seconds,
       description: episodes[i].description,
+      index: i,
       premium: i > premiumRange,
       downloadUrl: `https://www.youtube.com/watch?v=${episodes[i].id}`,
     };
@@ -65,8 +66,27 @@ const initEpisodes = async (lessonId, episodes, premiumRange) => {
   }
 };
 
-const updateAlgoliaIndex = async (lessons, subjects) => {
-  const data = lessons.map((item) => ({
+const updateAlgoliaIndex = async (subjects) => {
+  const lessonsSnapshot = await lessonCollection.select('slug').get();
+  const episodesSnapshot = await episodeCollection.select('videoId', 'premium', 'lessonId', 'title', 'index').get();
+
+  const lessons = {};
+  lessonsSnapshot.docs.forEach((lesson) => {
+    lessons[lesson.id] = lesson.data().slug;
+  });
+
+  const episodes = {};
+  episodesSnapshot.docs.forEach((episode) => {
+    episodes[lessons[episode.data().lessonId] + episode.data().videoId] = {
+      episodeId: episode.id,
+      title: episode.data().title,
+      seconds: episode.data().seconds,
+      index: episode.data().index,
+      premium: episode.data().premium,
+    };
+  });
+
+  const data = lessonsData.map((item) => ({
     objectID: item.slug,
     title: item.title,
     slug: item.slug,
@@ -74,7 +94,7 @@ const updateAlgoliaIndex = async (lessons, subjects) => {
     seconds: calculateTotalSeconds(item.episodes),
     subjects: item.subjects.map((slug) => subjects[slug]),
     createdAt: item.createdAt,
-    episodes: item.episodes.map((el) => el.title),
+    episodes: item.episodes.map((el) => episodes[item.slug + el.id]),
   }));
 
   const index = client.initIndex('lessons');
@@ -108,7 +128,7 @@ const initLessons = async () => {
       xlessons[lesson.data().slug] = lesson.id;
     });
 
-    await updateAlgoliaIndex(lessonsData, subjects);
+    await updateAlgoliaIndex(subjects);
     console.log('Initialization completed successfully.');
   } catch (error) {
     console.error('Failed to init lessons', error.message);
