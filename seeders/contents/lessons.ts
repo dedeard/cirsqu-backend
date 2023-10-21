@@ -72,7 +72,7 @@ const initEpisodes = async (lessonId, episodes, premiumRange) => {
 
 const updateAlgoliaIndex = async (subjects) => {
   const lessonsSnapshot = await lessonCollection.select('slug').get();
-  const episodesSnapshot = await episodeCollection.select('videoId', 'premium', 'lessonId', 'title', 'index').get();
+  const episodesSnapshot = await episodeCollection.select('videoId', 'premium', 'lessonId', 'title', 'index', 'seconds').get();
 
   const lessons = {};
   lessonsSnapshot.docs.forEach((lesson) => {
