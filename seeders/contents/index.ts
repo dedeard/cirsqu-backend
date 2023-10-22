@@ -1,9 +1,9 @@
-import initSubjects from './subjects';
-import initLessons from './lessons';
+import initAlgolia from './algolia';
+import initFirestore from './firestore';
 
 const initContents = async () => {
-  await initSubjects();
-  await initLessons();
+  await initFirestore();
+  await initAlgolia();
 };
 
 export default initContents;
