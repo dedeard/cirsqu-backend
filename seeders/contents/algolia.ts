@@ -77,7 +77,7 @@ const initAlgolia = async () => {
 
     const index = client.initIndex('lessons');
     await index.setSettings({
-      customRanking: ['asc(createdAt)'],
+      customRanking: ['desc(createdAt)'],
       attributesForFaceting: ['searchable(subjects.slug)'],
     });
     await index.saveObjects(lessons);
