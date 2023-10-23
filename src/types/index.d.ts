@@ -45,4 +45,12 @@ declare global {
     premium?: boolean;
     downloadUrl?: string;
   }
+
+  interface IComment {
+    userId: string;
+    targetId: string;
+    targetType: 'episode' | 'reply';
+    body: string;
+    likes: string[];
+  }
 }

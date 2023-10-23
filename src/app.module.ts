@@ -5,8 +5,17 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { CommonModule } from './common/common.module';
 import { BillingModule } from './billing/billing.module';
 import { EpisodesModule } from './episodes/episodes.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), CommonModule, AuthModule, ProfilesModule, BillingModule, EpisodesModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    CommonModule,
+    AuthModule,
+    ProfilesModule,
+    BillingModule,
+    EpisodesModule,
+    CommentsModule,
+  ],
 })
 export class AppModule {}
