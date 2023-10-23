@@ -4,8 +4,9 @@ import { AuthModule } from './auth/auth.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { CommonModule } from './common/common.module';
 import { BillingModule } from './billing/billing.module';
+import { EpisodesModule } from './episodes/episodes.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), CommonModule, AuthModule, ProfilesModule, BillingModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), CommonModule, AuthModule, ProfilesModule, BillingModule, EpisodesModule],
 })
 export class AppModule {}

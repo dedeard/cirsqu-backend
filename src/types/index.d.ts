@@ -33,4 +33,16 @@ declare global {
   interface IProduct extends Stripe.Product {
     price: Stripe.Price;
   }
+
+  interface IEpisode {
+    lessonId: string;
+    title: string;
+    slug: string;
+    index: number;
+    seconds: number;
+    description: string;
+    videoId: string;
+    premium?: boolean;
+    downloadUrl?: string;
+  }
 }
