@@ -3,7 +3,6 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
 import { Request } from 'express';
 import { AdminService } from '../common/services/admin.service';
-import isPremium from '../common/utils/is-premium';
 import { ProfilesRepository } from '../profiles/profiles.repository';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
@@ -59,7 +58,7 @@ export class FirebaseStrategy extends PassportStrategy(Strategy, 'firebase') {
 
     const profileSnapshot = await this.profilesRepository.find(userRecord.uid);
 
-    userRecord.premium = isPremium(profileSnapshot?.data.subscription);
+    userRecord.premium = !!profileSnapshot?.data.premium;
     userRecord.profile = profileSnapshot?.data;
 
     return userRecord;
