@@ -29,7 +29,7 @@ export class CommentsRepository {
   }
 
   create(data: IComment) {
-    return this.collection.add({ data, createdAt: this.serverTimestamp() });
+    return this.collection.add({ ...data, createdAt: this.serverTimestamp() });
   }
 
   update(commentId: string, data: { body?: string; likes?: string[] }, promise?: () => Promise<void>) {
