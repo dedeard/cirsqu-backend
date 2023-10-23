@@ -23,13 +23,15 @@ export class CommentsService {
         throw new BadRequestException('Target type is not valid.');
     }
 
-    return this.commentsRepository.create({
+    const snapshot = await this.commentsRepository.create({
       userId,
       targetId,
       targetType,
       body,
       likes: [],
     });
+
+    return { commentId: snapshot.id };
   }
 
   async update(userId: string, commentId: string, { body }: UpdateCommentDto) {
