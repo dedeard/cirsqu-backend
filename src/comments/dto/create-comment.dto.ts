@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString, IsEnum, Length } from 'class-validator';
 export class CreateCommentDto {
   @IsString()
   @IsNotEmpty()
-  @Length(20, 1500)
+  @Length(20, 3000)
   body: string;
 
   @IsString()
