@@ -1,14 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FieldValue, CollectionReference, DocumentData } from 'firebase-admin/firestore';
 import { AdminService } from '../common/services/admin.service';
+import { AlgoliaService } from '../common/services/algolia.service';
+import { SearchIndex } from 'algoliasearch';
 
 @Injectable()
 export class ProfilesRepository {
   public readonly collection: CollectionReference<DocumentData>;
+  public readonly index: SearchIndex;
   private readonly serverTimestamp = FieldValue.serverTimestamp;
 
-  constructor(private readonly admin: AdminService) {
+  constructor(
+    private readonly admin: AdminService,
+    private readonly algolia: AlgoliaService,
+  ) {
     this.collection = this.admin.db.collection('profiles');
+    this.index = this.algolia.profilesIndex;
   }
 
   async usernameExists(username: string, excludeId?: string): Promise<boolean> {
@@ -54,12 +61,41 @@ export class ProfilesRepository {
   }
 
   create(uid: string, profile: IProfile) {
-    return this.collection.doc(uid).set({ ...profile, createdAt: this.serverTimestamp() });
+    return this.admin.db.runTransaction(async (t) => {
+      const ref = this.collection.doc(uid);
+      t.set(ref, { ...profile, createdAt: this.serverTimestamp() });
+      await this.index.saveObject({
+        objectID: uid,
+        name: profile.name,
+        username: profile.username,
+        premium: !!profile.premium,
+        avatar: profile.avatar,
+      });
+    });
   }
 
   update(uid: string, profile: Partial<IProfile>, promise?: () => Promise<any>) {
     return this.admin.db.runTransaction(async (t) => {
       t.update(this.collection.doc(uid), profile);
+
+      const currentProfile = await this.findOrFail(uid);
+
+      let premium = !!currentProfile.data.premium;
+      if (typeof profile.premium !== 'undefined') {
+        premium = profile.premium;
+      }
+
+      await this.index.partialUpdateObject(
+        {
+          objectID: uid,
+          name: profile.name || currentProfile.data.name,
+          username: profile.username || currentProfile.data.username,
+          avatar: profile.avatar || currentProfile.data.avatar,
+          premium,
+        },
+        { createIfNotExists: true },
+      );
+
       await promise?.();
     });
   }
