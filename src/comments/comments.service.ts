@@ -23,30 +23,37 @@ export class CommentsService {
         throw new BadRequestException('Target type is not valid.');
     }
 
-    const snapshot = await this.commentsRepository.create({
+    await this.commentsRepository.create({
       userId,
       targetId,
       targetType,
       body,
       likes: [],
     });
-
-    return { commentId: snapshot.id };
   }
 
   async update(userId: string, commentId: string, { body }: UpdateCommentDto) {
     const comment = await this.commentsRepository.findOrFail(commentId);
     if (comment.data.userId !== userId) {
-      throw new NotFoundException('This commet is not yours');
+      throw new NotFoundException("You don't have permission to update this comment as it doesn't belong to you.");
     }
 
     await this.commentsRepository.update(commentId, { body });
   }
 
+  async destroy(userId: string, commentId: string) {
+    const comment = await this.commentsRepository.findOrFail(commentId);
+    if (comment.data.userId !== userId) {
+      throw new NotFoundException("You don't have permission to delete this comment as it doesn't belong to you.");
+    }
+
+    await this.commentsRepository.destroy(commentId);
+  }
+
   async like(userId: string, commentId: string) {
     const comment = await this.commentsRepository.findOrFail(commentId);
     if (comment.data.userId === userId) {
-      throw new BadRequestException('You cant like your own comment.');
+      throw new BadRequestException("Oops! You can't give a 'like' to your own comment.");
     }
 
     const liked = comment.data.likes.find((el) => el === userId);
@@ -59,7 +66,7 @@ export class CommentsService {
   async unlike(userId: string, commentId: string) {
     const comment = await this.commentsRepository.findOrFail(commentId);
     if (comment.data.userId === userId) {
-      throw new BadRequestException('You cant like your oun comment.');
+      throw new BadRequestException("Oops! You can't give a 'unlike' to your own comment.");
     }
 
     const liked = comment.data.likes.find((el) => el === userId);

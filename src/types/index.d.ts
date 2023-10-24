@@ -52,5 +52,6 @@ declare global {
     targetType: 'episode' | 'reply';
     body: string;
     likes: string[];
+    replyCount?: number;
   }
 }

@@ -19,6 +19,11 @@ export class CommentsController {
     return this.commentsService.update(user.uid, commentId, updateCommentDto);
   }
 
+  @Delete(':comment_id')
+  destroy(@Req() { user }: { user: IUser }, @Param('comment_id') commentId: string) {
+    return this.commentsService.destroy(user.uid, commentId);
+  }
+
   @Post(':comment_id/like')
   like(@Req() { user }: { user: IUser }, @Param('comment_id') commentId: string) {
     return this.commentsService.like(user.uid, commentId);

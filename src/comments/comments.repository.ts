@@ -6,18 +6,19 @@ import { AdminService } from '../common/services/admin.service';
 export class CommentsRepository {
   public readonly collection: CollectionReference<DocumentData>;
   private readonly serverTimestamp = FieldValue.serverTimestamp;
+  private readonly increment = FieldValue.increment;
 
   constructor(private readonly admin: AdminService) {
     this.collection = this.admin.db.collection('comments');
   }
 
-  async find(commentId: string): Promise<{ id: string; data: IComment } | null> {
+  async find(commentId: string): Promise<{ id: string; data: IComment; ref: FirebaseFirestore.DocumentReference<DocumentData> } | null> {
     const doc = await this.collection.doc(commentId).get();
     if (!doc.exists) {
       return null;
     }
     const data = doc.data() as IComment;
-    return { id: commentId, data };
+    return { id: commentId, data, ref: doc.ref };
   }
 
   async findOrFail(commentId: string) {
@@ -29,13 +30,44 @@ export class CommentsRepository {
   }
 
   create(data: IComment) {
-    return this.collection.add({ ...data, createdAt: this.serverTimestamp() });
+    return this.admin.db.runTransaction(async (t) => {
+      const docRef = this.collection.doc();
+      t.set(docRef, { ...data, createdAt: this.serverTimestamp() });
+
+      if (data.targetType === 'reply') {
+        const target = await this.findOrFail(data.targetId);
+
+        if (target.data.replyCount) {
+          t.update(target.ref, { replyCount: this.increment(1) });
+        } else {
+          t.update(target.ref, { replyCount: 1 });
+        }
+      }
+    });
   }
 
-  update(commentId: string, data: { body?: string; likes?: string[] }, promise?: () => Promise<void>) {
+  update(commentId: string, data: { body?: string; likes?: string[] }) {
     return this.admin.db.runTransaction(async (t) => {
       t.update(this.collection.doc(commentId), { ...data, updatedAt: this.serverTimestamp() });
-      await promise?.();
+    });
+  }
+
+  destroy(commentId: string) {
+    return this.admin.db.runTransaction(async (t) => {
+      const target = await this.findOrFail(commentId);
+      t.delete(target.ref);
+
+      if (target.data.targetType === 'reply') {
+        const parent = await this.findOrFail(target.data.targetId);
+        if (parent.data.replyCount) {
+          t.update(parent.ref, { replyCount: this.increment(-1) });
+        }
+      } else {
+        const repliesSnapshot = await this.collection.where('targetId', '==', commentId).get();
+        repliesSnapshot.docs.forEach((doc) => {
+          t.delete(doc.ref);
+        });
+      }
     });
   }
 }
