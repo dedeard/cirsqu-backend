@@ -46,9 +46,13 @@ export class CommentsRepository {
     });
   }
 
-  update(commentId: string, data: { body?: string; likes?: string[] }) {
+  update(commentId: string, data: { body?: string; likes?: string[] }, skipTimestamp?: boolean) {
     return this.admin.db.runTransaction(async (t) => {
-      t.update(this.collection.doc(commentId), { ...data, updatedAt: this.serverTimestamp() });
+      if (skipTimestamp) {
+        t.update(this.collection.doc(commentId), data);
+      } else {
+        t.update(this.collection.doc(commentId), { ...data, updatedAt: this.serverTimestamp() });
+      }
     });
   }
 

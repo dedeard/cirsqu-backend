@@ -60,7 +60,7 @@ export class CommentsService {
     if (liked) return;
 
     const likes = [...comment.data.likes, userId];
-    await this.commentsRepository.update(commentId, { likes });
+    await this.commentsRepository.update(commentId, { likes }, true);
   }
 
   async unlike(userId: string, commentId: string) {
@@ -73,6 +73,6 @@ export class CommentsService {
     if (!liked) return;
 
     const likes = comment.data.likes.filter((el) => el !== userId);
-    await this.commentsRepository.update(commentId, { likes });
+    await this.commentsRepository.update(commentId, { likes }, true);
   }
 }
