@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class UpdateCommentDto {
   @IsString()
   @IsNotEmpty()
-  @Length(20, 3000)
+  @MaxLength(3000)
   body: string;
 }
