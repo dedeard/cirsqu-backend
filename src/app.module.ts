@@ -6,6 +6,7 @@ import { CommonModule } from './common/common.module';
 import { BillingModule } from './billing/billing.module';
 import { EpisodesModule } from './episodes/episodes.module';
 import { CommentsModule } from './comments/comments.module';
+import { CollectionsModule } from './collections/collections.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CommentsModule } from './comments/comments.module';
     BillingModule,
     EpisodesModule,
     CommentsModule,
+    CollectionsModule,
   ],
 })
 export class AppModule {}

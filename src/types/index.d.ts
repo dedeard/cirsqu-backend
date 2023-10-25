@@ -54,4 +54,9 @@ declare global {
     likes: string[];
     replyCount?: number;
   }
+
+  interface ICollection {
+    userId: string;
+    lessonId: string;
+  }
 }
