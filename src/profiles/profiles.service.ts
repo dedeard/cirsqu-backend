@@ -35,7 +35,7 @@ export class ProfilesService {
       throw new BadRequestException('Profile already created.');
     }
 
-    let avatar: string | undefined = undefined;
+    let avatar: string | null = null;
     if (user.photoURL) avatar = await this.generateAvatar(user.photoURL);
 
     const customer = await this.stripe.customers.create({
