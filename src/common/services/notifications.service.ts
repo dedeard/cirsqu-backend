@@ -1,7 +1,7 @@
+import type { Stripe } from 'stripe';
 import { Injectable } from '@nestjs/common';
 import { CollectionReference, DocumentData, FieldValue } from 'firebase-admin/firestore';
 import { AdminService } from './admin.service';
-
 @Injectable()
 export class NotificationsService {
   public readonly collection: CollectionReference<DocumentData>;
@@ -34,5 +34,25 @@ export class NotificationsService {
     if (!exists) {
       return this.create({ userId, type: 'like', data });
     }
+  }
+
+  async onSubscriptionRecurring(userId: string, subscription: Stripe.Subscription) {
+    return this.create({
+      userId,
+      type: 'subscription.recurring',
+      data: {
+        status: subscription.status,
+      },
+    });
+  }
+
+  async onSubscriptionLifetime(userId: string, paymentIntent: Stripe.PaymentIntent) {
+    return this.create({
+      userId,
+      type: 'subscription.lifetime',
+      data: {
+        status: paymentIntent.status,
+      },
+    });
   }
 }

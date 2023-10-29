@@ -61,7 +61,7 @@ declare global {
 
   interface INotification {
     userId: string;
-    type: 'reply' | 'like';
+    type: 'reply' | 'like' | 'subscription.recurring' | 'subscription.lifetime';
     data?: Record<string, any>;
   }
 }
