@@ -29,9 +29,9 @@ export class CommentsRepository {
     return snapshot;
   }
 
-  create(data: IComment) {
-    return this.admin.db.runTransaction(async (t) => {
-      const docRef = this.collection.doc();
+  async create(data: IComment) {
+    const docRef = this.collection.doc();
+    await this.admin.db.runTransaction(async (t) => {
       t.set(docRef, { ...data, createdAt: this.serverTimestamp() });
 
       if (data.targetType === 'reply') {
@@ -44,6 +44,7 @@ export class CommentsRepository {
         }
       }
     });
+    return docRef.id;
   }
 
   update(commentId: string, data: { body?: string; likes?: string[] }, skipTimestamp?: boolean) {

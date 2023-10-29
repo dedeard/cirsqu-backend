@@ -3,33 +3,44 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { EpisodesRepository } from '../episodes/episodes.repository';
 import { CommentsRepository } from './comments.repository';
+import { NotificationsService } from '../common/services/notifications.service';
 
 @Injectable()
 export class CommentsService {
   constructor(
     private readonly episodesRepository: EpisodesRepository,
     private readonly commentsRepository: CommentsRepository,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(userId: string, { targetId, targetType, body }: CreateCommentDto) {
+    let replyTarget: { id: string; data: IComment } | null = null;
     switch (targetType) {
       case 'episode':
         await this.episodesRepository.findOrFail(targetId);
         break;
       case 'reply':
-        await this.commentsRepository.findOrFail(targetId);
+        replyTarget = await this.commentsRepository.findOrFail(targetId);
         break;
       default:
         throw new BadRequestException('Target type is not valid.');
     }
 
-    await this.commentsRepository.create({
+    const docId = await this.commentsRepository.create({
       userId,
       targetId,
       targetType,
       body,
       likes: [],
     });
+
+    if (replyTarget) {
+      await this.notificationsService.onReply(replyTarget.data.userId, {
+        userId,
+        commentId: replyTarget.id,
+        replyId: docId,
+      });
+    }
   }
 
   async update(userId: string, commentId: string, { body }: UpdateCommentDto) {
@@ -61,6 +72,11 @@ export class CommentsService {
 
     const likes = [...comment.data.likes, userId];
     await this.commentsRepository.update(commentId, { likes }, true);
+
+    await this.notificationsService.onLike(comment.data.userId, {
+      userId,
+      commentId: comment.id,
+    });
   }
 
   async unlike(userId: string, commentId: string) {

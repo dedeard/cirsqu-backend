@@ -1,3 +1,4 @@
+import { Timestamp } from 'firebase-admin/firestore';
 import type { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import type { Stripe } from 'stripe';
 
@@ -57,5 +58,12 @@ declare global {
   interface ICollection {
     userId: string;
     lessonId: string;
+  }
+
+  interface INotification {
+    userId: string;
+    type: 'reply' | 'like';
+    readAt?: Timestamp | null;
+    data?: Record<string, any>;
   }
 }
