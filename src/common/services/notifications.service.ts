@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CollectionReference, DocumentData } from 'firebase-admin/firestore';
+import { CollectionReference, DocumentData, FieldValue } from 'firebase-admin/firestore';
 import { AdminService } from './admin.service';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class NotificationsService {
   }
 
   async create(notification: INotification) {
-    return this.collection.add(notification);
+    return this.collection.add({ ...notification, createdAt: FieldValue.serverTimestamp() });
   }
 
   async onReply(userId: string, data: { userId: string; commentId: string; replyId: string }) {
