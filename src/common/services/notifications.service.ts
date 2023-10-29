@@ -15,7 +15,9 @@ export class NotificationsService {
   }
 
   async onReply(userId: string, data: { userId: string; commentId: string; replyId: string }) {
-    return this.create({ userId, type: 'reply', data });
+    if (userId !== data.userId) {
+      return this.create({ userId, type: 'reply', data });
+    }
   }
 
   async onLike(userId: string, data: { userId: string; commentId: string }) {
