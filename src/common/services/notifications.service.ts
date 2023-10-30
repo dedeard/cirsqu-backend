@@ -27,7 +27,7 @@ export class NotificationsService {
     const episodeSnap = await this.episodes.doc(episodeId).get();
     const episode = episodeSnap.data() as IEpisode;
     const lessonSnap = await this.lessons.doc(episode.lessonId).get();
-    const lesson = lessonSnap.data().slug;
+    const lesson = lessonSnap.data();
     return `lessons/${lesson.slug}/${episodeSnap.id}`;
   }
 
