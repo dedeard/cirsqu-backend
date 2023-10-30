@@ -1,22 +1,57 @@
 import type { Stripe } from 'stripe';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CollectionReference, DocumentData, FieldValue } from 'firebase-admin/firestore';
 import { AdminService } from './admin.service';
+
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   public readonly collection: CollectionReference<DocumentData>;
+  public readonly lessons: CollectionReference<DocumentData>;
+  public readonly episodes: CollectionReference<DocumentData>;
+  public readonly comments: CollectionReference<DocumentData>;
 
   constructor(private readonly admin: AdminService) {
     this.collection = this.admin.db.collection('notifications');
+    this.lessons = this.admin.db.collection('lessons');
+    this.episodes = this.admin.db.collection('episodes');
+    this.comments = this.admin.db.collection('comments');
   }
 
-  async create(notification: INotification) {
+  create(notification: INotification) {
     return this.collection.add({ ...notification, createdAt: FieldValue.serverTimestamp() });
+  }
+
+  async getPathByEpiosdeId(episodeId: string): Promise<string> {
+    const episodeSnap = await this.episodes.doc(episodeId).get();
+    const episode = episodeSnap.data() as IEpisode;
+    const lessonSnap = await this.lessons.doc(episode.lessonId).get();
+    const lesson = lessonSnap.data().slug;
+    return `lessons/${lesson.slug}/${episodeSnap.id}`;
+  }
+
+  async getPathByCommentId(commentId: string): Promise<string> {
+    const commentSnap = await this.comments.doc(commentId).get();
+    const comment = commentSnap.data() as IComment;
+    switch (comment.targetType) {
+      case 'episode':
+        return this.getPathByEpiosdeId(comment.targetId);
+      case 'reply':
+        return this.getPathByCommentId(comment.targetId);
+      default:
+        return '';
+    }
   }
 
   async onReply(userId: string, data: { userId: string; commentId: string; replyId: string }) {
     if (userId !== data.userId) {
-      return this.create({ userId, type: 'reply', data });
+      try {
+        const path = await this.getPathByCommentId(data.commentId);
+        await this.create({ userId, type: 'reply', data: { ...data, path } });
+      } catch (error: any) {
+        this.logger.error(`Reply failed - ${error.message}`);
+      }
     }
   }
 
@@ -32,7 +67,8 @@ export class NotificationsService {
     }
 
     if (!exists) {
-      return this.create({ userId, type: 'like', data });
+      const path = await this.getPathByCommentId(data.commentId);
+      return this.create({ userId, type: 'like', data: { ...data, path } });
     }
   }
 
