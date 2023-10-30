@@ -42,6 +42,7 @@ export class NotificationsService {
       type: 'subscription.recurring',
       data: {
         status: subscription.status,
+        plan: subscription.items.data[0]?.price?.lookup_key || null,
       },
     });
   }
@@ -52,6 +53,7 @@ export class NotificationsService {
       type: 'subscription.lifetime',
       data: {
         status: paymentIntent.status,
+        plan: 'lifetime',
       },
     });
   }
