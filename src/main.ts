@@ -1,9 +1,11 @@
+import { join } from 'path';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import { ValidationError } from 'class-validator';
 import { NestFactory } from '@nestjs/core';
 import { UnprocessableEntityException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { ValidationError } from 'class-validator';
-import cookieParser from 'cookie-parser';
 
 // Create custom exception factory for validation pipe
 function exceptionFactory(errors: ValidationError[]) {
@@ -31,6 +33,9 @@ async function bootstrap() {
       }
     },
   });
+
+  // Serve the favicon
+  app.use('/favicon.ico', express.static(join(__dirname, '..', 'favicon.ico')));
 
   // Enable cookie parsing
   app.use(cookieParser());
