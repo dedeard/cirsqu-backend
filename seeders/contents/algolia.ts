@@ -79,6 +79,7 @@ const initAlgolia = async () => {
     await index.setSettings({
       customRanking: ['desc(createdAt)'],
       attributesForFaceting: ['searchable(subjects.slug)'],
+      searchableAttributes: ['lessonId', 'title', 'episodes.title', 'subjects.name', 'description'],
     });
     await index.saveObjects(lessons);
     console.log('Updated Algolia lessons index');
