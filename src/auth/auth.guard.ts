@@ -17,10 +17,16 @@ export class AuthGuard extends BaseAuthGuard('firebase') {
       return true;
     }
 
-    await super.canActivate(context);
+    try {
+      await super.canActivate(context);
 
-    if (!request.user?.profile && !metadata?.includes('skip-profile')) {
-      throw new UnauthorizedException(`No profile found for the user with id - ${request.user.uid}`);
+      if (!request.user?.profile && !metadata?.includes('skip-profile')) {
+        throw new UnauthorizedException(`No profile found for the user with id - ${request.user.uid}`);
+      }
+    } catch (error: any) {
+      if (!metadata?.includes('optional')) {
+        throw error;
+      }
     }
 
     return true;
