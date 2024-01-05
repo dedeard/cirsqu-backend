@@ -1,3 +1,4 @@
+import type { Timestamp } from 'firebase-admin/firestore';
 import type { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import type { Stripe } from 'stripe';
 
@@ -48,7 +49,7 @@ declare global {
   interface IComment {
     userId: string;
     targetId: string;
-    targetType: 'episode' | 'reply';
+    targetType: 'answer' | 'episode' | 'reply';
     body: string;
     likes: string[];
     replyCount?: number;
@@ -63,5 +64,16 @@ declare global {
     userId: string;
     type: 'reply' | 'like' | 'subscription.recurring' | 'subscription.lifetime';
     data?: Record<string, any>;
+  }
+
+  interface IQuestion {
+    userId: string;
+    validAnswerId: string | null;
+    title: string;
+    tags: string[];
+    content: string;
+    likes: string[];
+    createdAt: Timestamp;
+    updatedAt: Timestamp | null;
   }
 }

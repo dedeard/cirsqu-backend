@@ -8,12 +8,14 @@ export class AlgoliaService {
   readonly lessonsIndex: SearchIndex;
   readonly subjectsIndex: SearchIndex;
   readonly profilesIndex: SearchIndex;
+  readonly questionsIndex: SearchIndex;
 
   constructor(private readonly config: ConfigService) {
     this.client = this.initSearchClient();
     this.lessonsIndex = this.client.initIndex('lessons');
     this.subjectsIndex = this.client.initIndex('subjects');
     this.profilesIndex = this.client.initIndex('profiles');
+    this.questionsIndex = this.client.initIndex('questions');
   }
 
   private initSearchClient() {
