@@ -74,4 +74,26 @@ export class QuestionsRepository {
       });
     });
   }
+
+  update(
+    slug: string,
+    data: { title: string; content: string; tags: string[]; validAnswerId?: string; likeCount?: number },
+    promise?: () => Promise<any>,
+  ) {
+    return this.admin.db.runTransaction(async (t) => {
+      const updatedAt = Timestamp.now();
+      t.update(this.collection.doc(slug), { ...data, updatedAt });
+
+      await this.index.partialUpdateObject(
+        {
+          objectID: slug,
+          ...data,
+          updatedAt: updatedAt.toDate(),
+        },
+        { createIfNotExists: true },
+      );
+
+      await promise?.();
+    });
+  }
 }

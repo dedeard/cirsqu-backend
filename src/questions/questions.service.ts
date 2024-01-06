@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { QuestionsRepository } from './questions.repository';
 import { CreateQuestionDto } from './dto/create-question.dto';
 
@@ -11,5 +11,13 @@ export class QuestionsService {
       ...data,
       userId: user.uid,
     });
+  }
+
+  async update(slug: string, user: IUser, data: CreateQuestionDto) {
+    const question = await this.questionsRepository.findOrFail(slug);
+    if (question.data.userId !== user.uid) {
+      throw new BadRequestException('This question is not yours.');
+    }
+    return this.questionsRepository.update(question.id, data);
   }
 }
