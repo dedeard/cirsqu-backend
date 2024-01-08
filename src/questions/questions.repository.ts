@@ -67,6 +67,8 @@ export class QuestionsRepository {
       await this.index.saveObject({
         objectID: slug,
         ...data,
+        tags: undefined,
+        _tags: data.tags,
         likeCount: 0,
         createdAt: createdAt.toDate(),
         updatedAt: null,
@@ -88,6 +90,8 @@ export class QuestionsRepository {
         {
           objectID: slug,
           ...data,
+          tags: undefined,
+          _tags: data.tags,
           updatedAt: updatedAt.toDate(),
         },
         { createIfNotExists: true },
