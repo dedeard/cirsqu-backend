@@ -20,4 +20,12 @@ export class QuestionsService {
     }
     return this.questionsRepository.update(question.id, data);
   }
+
+  async destroy(slug: string, user: IUser) {
+    const question = await this.questionsRepository.findOrFail(slug);
+    if (question.data.userId !== user.uid) {
+      throw new BadRequestException('This question is not yours.');
+    }
+    return this.questionsRepository.destroy(slug);
+  }
 }

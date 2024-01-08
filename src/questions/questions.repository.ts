@@ -1,7 +1,7 @@
 import slugify from 'slugify';
 import { SearchIndex } from 'algoliasearch';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CollectionReference, DocumentData, FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { CollectionReference, DocumentData, Timestamp } from 'firebase-admin/firestore';
 import { AdminService } from '../common/services/admin.service';
 import { AlgoliaService } from '../common/services/algolia.service';
 
@@ -35,7 +35,7 @@ export class QuestionsRepository {
     return snapshot;
   }
 
-  async generateSlug(title: string) {
+  private async generateSlug(title: string) {
     let slug = slugify(title);
     let exists = !!(await this.find(slug));
     let i = 1;
@@ -78,7 +78,7 @@ export class QuestionsRepository {
   update(
     slug: string,
     data: { title: string; content: string; tags: string[]; validAnswerId?: string; likeCount?: number },
-    promise?: () => Promise<any>,
+    promise?: <T = any>() => Promise<T>,
   ) {
     return this.admin.db.runTransaction(async (t) => {
       const updatedAt = Timestamp.now();
@@ -93,6 +93,14 @@ export class QuestionsRepository {
         { createIfNotExists: true },
       );
 
+      await promise?.();
+    });
+  }
+
+  destroy(slug: string, promise?: <T = any>() => Promise<T>) {
+    return this.admin.db.runTransaction(async (t) => {
+      t.delete(this.collection.doc(slug));
+      await this.index.deleteObject(slug);
       await promise?.();
     });
   }
