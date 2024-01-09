@@ -18,7 +18,7 @@ export class QuestionsService {
     if (question.data.userId !== user.uid) {
       throw new BadRequestException('This question is not yours.');
     }
-    return this.questionsRepository.update(question.id, data);
+    return this.questionsRepository.update(question.id, data, question.data);
   }
 
   async destroy(slug: string, user: IUser) {
@@ -27,5 +27,22 @@ export class QuestionsService {
       throw new BadRequestException('This question is not yours.');
     }
     return this.questionsRepository.destroy(slug);
+  }
+
+  async likeToggle(slug: string, user: IUser) {
+    const question = await this.questionsRepository.findOrFail(slug);
+    if (question.data.userId === user.uid) {
+      throw new BadRequestException("Oops! You can't give a 'like' to your own question.");
+    }
+
+    let { likes } = question.data;
+
+    if (likes.includes(user.uid)) {
+      likes = likes.filter((el) => el !== user.uid);
+    } else {
+      likes.push(user.uid);
+    }
+
+    this.questionsRepository.update(slug, { likes }, question.data);
   }
 }

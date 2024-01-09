@@ -77,25 +77,41 @@ export class QuestionsRepository {
     });
   }
 
-  update(
+  async update(
     slug: string,
-    data: { title: string; content: string; tags: string[]; validAnswerId?: string; likeCount?: number },
-    promise?: <T = any>() => Promise<T>,
+    data: { title?: string; content?: string; tags?: string[]; validAnswerId?: string; likes?: string[] },
+    oldData: IQuestion,
+    promise?: () => Promise<any>,
   ) {
-    return this.admin.db.runTransaction(async (t) => {
-      const updatedAt = Timestamp.now();
-      t.update(this.collection.doc(slug), { ...data, updatedAt });
+    const { title, content, tags, validAnswerId, likes } = data;
+    const { createdAt } = oldData;
+    const updatedAt = Timestamp.now();
 
-      await this.index.partialUpdateObject(
-        {
-          objectID: slug,
-          ...data,
-          tags: undefined,
-          _tags: data.tags,
-          updatedAt: updatedAt.toDate(),
-        },
-        { createIfNotExists: true },
-      );
+    await this.admin.db.runTransaction(async (t) => {
+      const newData = {
+        ...oldData,
+        title,
+        content,
+        tags,
+        validAnswerId,
+        likes,
+        updatedAt,
+        createdAt,
+      };
+
+      const indexData = {
+        objectID: slug,
+        ...newData,
+        tags: undefined,
+        likes: undefined,
+        likeCount: likes.length,
+        _tags: tags,
+        createdAt: createdAt.toDate(),
+        updatedAt: updatedAt.toDate(),
+      };
+
+      t.update(this.collection.doc(slug), newData);
+      await this.index.partialUpdateObject(indexData, { createIfNotExists: true });
 
       await promise?.();
     });
