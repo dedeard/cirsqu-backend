@@ -27,7 +27,7 @@ export class QuestionsRepository {
     return { id: questionId, data };
   }
 
-  async findOrFail(questionId: string) {
+  async findOrFail(questionId: string): Promise<{ id: string; data: IQuestion }> {
     const snapshot = await this.find(questionId);
     if (!snapshot) {
       throw new NotFoundException('Question not found.');
@@ -35,22 +35,22 @@ export class QuestionsRepository {
     return snapshot;
   }
 
-  private async generateSlug(title: string) {
-    let slug = slugify(title);
-    let exists = !!(await this.find(slug));
-    let i = 1;
-
-    while (exists) {
-      slug = `${slugify(title)}-${i}`;
-      exists = !!(await this.find(slug));
-      i++;
-    }
-
-    return slug;
+  private async isSlugExists(slug: string): Promise<boolean> {
+    return !!(await this.find(slug));
   }
 
-  create(data: { userId: string; title: string; content: string; tags: string[] }) {
-    return this.admin.db.runTransaction(async (t) => {
+  private async generateSlugWithCounter(title: string, counter: number): Promise<string> {
+    const slug = `${slugify(title)}-${counter}`;
+    return this.isSlugExists(slug) ? this.generateSlugWithCounter(title, counter + 1) : slug;
+  }
+
+  private async generateSlug(title: string): Promise<string> {
+    const slug = slugify(title);
+    return this.isSlugExists(slug) ? this.generateSlugWithCounter(title, 1) : slug;
+  }
+
+  async create(data: { userId: string; title: string; content: string; tags: string[] }): Promise<void> {
+    await this.admin.db.runTransaction(async (t) => {
       const slug = await this.generateSlug(data.title);
       const ref = this.collection.doc(slug);
       const createdAt = Timestamp.now();
@@ -64,7 +64,7 @@ export class QuestionsRepository {
       };
       t.set(ref, rawData);
 
-      await this.index.saveObject({
+      const indexData = {
         objectID: slug,
         ...data,
         tags: undefined,
@@ -73,16 +73,13 @@ export class QuestionsRepository {
         createdAt: createdAt.toDate(),
         updatedAt: null,
         validAnswerId: null,
-      });
+      };
+
+      await this.index.saveObject(indexData);
     });
   }
 
-  async update(
-    slug: string,
-    data: { title?: string; content?: string; tags?: string[]; validAnswerId?: string; likes?: string[] },
-    oldData: IQuestion,
-    promise?: () => Promise<any>,
-  ) {
+  async update(slug: string, data: Partial<IQuestion>, oldData: IQuestion, promise?: () => Promise<any>): Promise<void> {
     const { title, content, tags, validAnswerId, likes } = data;
     const { createdAt } = oldData;
     const updatedAt = Timestamp.now();
@@ -117,8 +114,8 @@ export class QuestionsRepository {
     });
   }
 
-  destroy(slug: string, promise?: <T = any>() => Promise<T>) {
-    return this.admin.db.runTransaction(async (t) => {
+  async destroy(slug: string, promise?: <T = any>() => Promise<T>): Promise<void> {
+    await this.admin.db.runTransaction(async (t) => {
       t.delete(this.collection.doc(slug));
       await this.index.deleteObject(slug);
       await promise?.();
