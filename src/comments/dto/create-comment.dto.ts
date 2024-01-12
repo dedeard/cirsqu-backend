@@ -12,6 +12,6 @@ export class CreateCommentDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsEnum(['episode', 'reply'])
-  targetType: 'episode' | 'reply';
+  @IsEnum(['answer', 'episode', 'reply'])
+  targetType: 'answer' | 'episode' | 'reply';
 }

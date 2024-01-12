@@ -24,7 +24,7 @@ export class CommentsRepository {
   async findOrFail(commentId: string) {
     const snapshot = await this.find(commentId);
     if (!snapshot) {
-      throw new NotFoundException('Episode not found.');
+      throw new NotFoundException();
     }
     return snapshot;
   }

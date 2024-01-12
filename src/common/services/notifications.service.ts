@@ -55,6 +55,16 @@ export class NotificationsService {
     }
   }
 
+  async onAnswer(userId: string, data: { userId: string; commentId: string; questionId: string }) {
+    if (userId !== data.userId) {
+      try {
+        await this.create({ userId, type: 'answer', data: { ...data, path: `forum/${data.questionId}` } });
+      } catch (error: any) {
+        this.logger.error(`Answer failed - ${error.message}`);
+      }
+    }
+  }
+
   async onLike(userId: string, data: { userId: string; commentId: string }) {
     const snapshot = await this.collection.where('userId', '==', userId).get();
 

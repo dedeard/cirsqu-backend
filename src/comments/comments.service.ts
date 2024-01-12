@@ -4,18 +4,24 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { EpisodesRepository } from '../episodes/episodes.repository';
 import { CommentsRepository } from './comments.repository';
 import { NotificationsService } from '../common/services/notifications.service';
+import { QuestionsRepository } from '../questions/questions.repository';
 
 @Injectable()
 export class CommentsService {
   constructor(
     private readonly episodesRepository: EpisodesRepository,
+    private readonly questionsRepository: QuestionsRepository,
     private readonly commentsRepository: CommentsRepository,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(userId: string, { targetId, targetType, body }: CreateCommentDto) {
+    let answerTarget: { id: string; data: IQuestion } | null = null;
     let replyTarget: { id: string; data: IComment } | null = null;
     switch (targetType) {
+      case 'answer':
+        answerTarget = await this.questionsRepository.findOrFail(targetId);
+        break;
       case 'episode':
         await this.episodesRepository.findOrFail(targetId);
         break;
@@ -39,6 +45,12 @@ export class CommentsService {
         userId,
         commentId: replyTarget.id,
         replyId: docId,
+      });
+    } else if (answerTarget) {
+      await this.notificationsService.onAnswer(answerTarget.data.userId, {
+        userId,
+        questionId: answerTarget.id,
+        commentId: docId,
       });
     }
   }
