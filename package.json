@@ -28,7 +28,7 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^10.0.2",
-    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/platform-express": "^11.1.5",
     "algoliasearch": "^4.20.0",
     "axios": "^1.5.1",
     "class-transformer": "^0.5.1",
